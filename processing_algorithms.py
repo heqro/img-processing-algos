@@ -18,10 +18,15 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         energy = prior + fidelity
         return energy, prior, fidelity
 
+    def verify_mass_conservation():
+        omega_size = im_approx.shape[0] * im_approx.shape[1]
+        return (np.sum(im_approx) - np.sum(im_noise))/omega_size
+
     # Initialization
     energy_values = np.zeros(n_it)
     prior_values = np.zeros(n_it)
     fidelity_values = np.zeros(n_it)
+    mass_loss_values = np.zeros(n_it)
     im_approx = im_noise
 
     for i in range(n_it):
@@ -35,7 +40,8 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         im_approx = im_approx + dt * pde_value
         # Save values
         energy_values[i], prior_values[i], fidelity_values[i] = p_energy()
-        print('En:', energy_values[i], 'Pr:', prior_values[i], 'Fi:', fidelity_values[i], end='')
+        mass_loss_values[i] = verify_mass_conservation()
+        print('En:', energy_values[i], 'Pr:', prior_values[i], 'Fi:', fidelity_values[i], 'Mass:', mass_loss_values[i], end='')
         if im_orig is not None:
             print(" PSNR", im_tools.psnr(im_approx, im_orig), end='')
         print('')
