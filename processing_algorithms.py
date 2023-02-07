@@ -3,11 +3,11 @@ from im_tools import GradientType
 import numpy as np
 
 
-def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, im_orig= None):
+def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, im_orig=None):
     def p_energy() -> tuple[float, float, float]:
         """
 
-        :return: The values for energy, prior and fidelity.
+        :return: The values for energy, prior and fidelity of the problem.
         """
         omega_size = im_approx.shape[0] * im_approx.shape[1]
         im_x = im_tools.gradx(im_approx, gradient_type=GradientType.FORWARD)
@@ -19,8 +19,13 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         return energy, prior, fidelity
 
     def verify_mass_conservation():
+        """
+
+        :return: The difference in mass between the current image and the initial image.
+        It serves as another check for the correctness of the algorithm.
+        """
         omega_size = im_approx.shape[0] * im_approx.shape[1]
-        return (np.sum(im_approx) - np.sum(im_noise))/omega_size
+        return (np.sum(im_approx) - np.sum(im_noise)) / omega_size
 
     # Initialization
     energy_values = np.zeros(n_it)
@@ -30,10 +35,10 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     im_approx = im_noise
 
     for i in range(n_it):
-        print('Iteración',i)
+        print('Iteración', i)
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
         im_y = im_tools.grady(im_approx, GradientType.FORWARD)
-        lap = im_tools.div(im_x, im_y, GradientType.CENTERED, p, epsilon)
+        lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
         # PDE calculation
         pde_value = lap - fidelity_coef * (im_approx - im_noise)
         # Gradient descent iteration
@@ -41,7 +46,8 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         # Save values
         energy_values[i], prior_values[i], fidelity_values[i] = p_energy()
         mass_loss_values[i] = verify_mass_conservation()
-        print('En:', energy_values[i], 'Pr:', prior_values[i], 'Fi:', fidelity_values[i], 'Mass:', mass_loss_values[i], end='')
+        print('En:', energy_values[i], 'Pr:', prior_values[i], 'Fi:', fidelity_values[i], 'Mass:', mass_loss_values[i],
+              end='')
         if im_orig is not None:
             print(" PSNR", im_tools.psnr(im_approx, im_orig), end='')
         print('')
