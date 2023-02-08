@@ -100,9 +100,17 @@ def psnr(img1, img2):
     return 20 * np.log10(max_intensity / np.sqrt(mse))
 
 
-def convolve_image(img, matrix):
-    img_x = np.zeros(img.shape)
-    img_x[:, :, 0] = sp.signal.convolve2d(img[:, :, 0], matrix, mode="same")
-    img_x[:, :, 1] = sp.signal.convolve2d(img[:, :, 1], matrix, mode="same")
-    img_x[:, :, 2] = sp.signal.convolve2d(img[:, :, 2], matrix, mode="same")
-    return img_x
+def convolve_image(img, kernel):
+    img_conv = np.zeros(img.shape)
+    img_conv[:, :, 0] = sp.signal.convolve2d(img[:, :, 0], kernel, mode="same")
+    img_conv[:, :, 1] = sp.signal.convolve2d(img[:, :, 1], kernel, mode="same")
+    img_conv[:, :, 2] = sp.signal.convolve2d(img[:, :, 2], kernel, mode="same")
+    return img_conv
+
+
+def fast_noise_std_estimation(img):
+    kernel = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]])
+    convolution_result = np.sum(np.abs(convolve_image(img, kernel)))
+    factor = np.sqrt(np.pi / 2) / (3 * 6 * (img.shape[0] - 2) * (img.shape[1] - 2)) * convolution_result
+    return factor
+

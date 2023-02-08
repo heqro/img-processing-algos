@@ -2,3 +2,5 @@ venv
 __pycache__
 .idea/
 hacking_around_results/
+
+test_images/elo.jpg

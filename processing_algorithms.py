@@ -28,13 +28,19 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         return (np.sum(im_approx) - np.sum(im_noise)) / omega_size
 
     # Initialization
-    energy_values = np.zeros(n_it)
-    prior_values = np.zeros(n_it)
-    fidelity_values = np.zeros(n_it)
-    mass_loss_values = np.zeros(n_it)
-    psnr_values = np.zeros(n_it)
+    energy_values = []
+    prior_values = []
+    fidelity_values = []
+    mass_loss_values = []
+    psnr_values = []
     im_approx = im_noise
 
+    estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2
+    proposed_stop = -1
+    psnr_image = None
+
+    # fidelity = 0
+    # while fidelity < estimated_variance: # early stoppage
     for i in range(n_it):
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
         im_y = im_tools.grady(im_approx, GradientType.FORWARD)
@@ -44,8 +50,15 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         # Gradient descent iteration
         im_approx = im_approx + dt * pde_value
         # Save values
-        energy_values[i], prior_values[i], fidelity_values[i] = p_energy()
-        mass_loss_values[i] = verify_mass_conservation()
+        energy, prior, fidelity = p_energy()
+        energy_values += [energy]
+        prior_values += [prior]
+        fidelity_values += [fidelity]
+        mass_loss_values += [verify_mass_conservation()]
         if im_orig is not None:
-            psnr_values[i] = im_tools.psnr(im_approx, im_orig)
-    return im_approx, energy_values, prior_values, fidelity_values, mass_loss_values, psnr_values
+            psnr_values += [im_tools.psnr(im_approx, im_orig)]
+        if fidelity < estimated_variance:
+            proposed_stop = i
+            psnr_image = im_approx
+    return im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
+        np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image
