@@ -56,7 +56,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         fidelity_values += [fidelity]
         mass_loss_values += [verify_mass_conservation()]
         if im_orig is not None:
-            psnr_values += [im_tools.psnr(im_approx, im_orig)]
+            psnr_values += [im_tools.psnr(im_orig, im_approx)]
         if fidelity < estimated_variance:
             proposed_stop = i
             psnr_image = im_approx

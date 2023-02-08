@@ -10,7 +10,16 @@ class GradientType(Enum):
     BACKWARD = 2
 
 
-def gradx(img, gradient_type: GradientType, use_convolution=False):
+FWRD_X_GRADIENT = [[0.0, 0.0, 0.0], [0.0, -1.0, 1.0], [0.0, 0.0, 0.0]]
+CENTER_X_GRADIENT = [[0.0, 0.0, 0.0], [0.5, 0.0, 0.5], [0.0, 0.0, 0.0]]
+BWRD_X_GRADIENT = [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
+
+FWRD_Y_GRADIENT = [[0.0, 1.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 0.0]]
+CENTER_Y_GRADIENT = [[0.0, 0.5, 0.0], [0.0, 0.0, 0.0], [0.0, -0.5, 0.0]]
+BWRD_Y_GRADIENT = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, -1.0, 0.0]]
+
+
+def gradx(img, gradient_type: GradientType, use_convolution=True):
     """
     Calculates the gradient of an image along the x-axis.
     :param img: The image for which we calculate the gradient.
@@ -31,21 +40,15 @@ def gradx(img, gradient_type: GradientType, use_convolution=False):
             img_x[:, 1:, :] = img[:, 1:, :] - img[:, :-1, :]
     else:
         if gradient_type.value == GradientType.FORWARD.value:
-            img_x = convolve_image(img, np.array([[0, 0, 0],
-                                                  [0, -1, 1],
-                                                  [0, 0, 0]]))
+            img_x = convolve_image(img, np.array(FWRD_X_GRADIENT))
         if gradient_type.value == GradientType.CENTERED.value:
-            img_x = convolve_image(img, np.array([[0, 0, 0],
-                                                  [0.5, 0, 0.5],
-                                                  [0, 0, 0]]))
+            img_x = convolve_image(img, np.array(CENTER_X_GRADIENT))
         if gradient_type.value == GradientType.BACKWARD.value:
-            img_x = convolve_image(img, np.array([[0, 0, 0],
-                                                  [-1, 1, 0],
-                                                  [0, 0, 0]]))
+            img_x = convolve_image(img, np.array(BWRD_X_GRADIENT))
     return img_x
 
 
-def grady(img, gradient_type: GradientType, use_convolution=False):
+def grady(img, gradient_type: GradientType, use_convolution=True):
     """
     Calculates the gradient of an image along the y-axis.
     :param img: The image for which we calculate the gradient.
@@ -66,17 +69,11 @@ def grady(img, gradient_type: GradientType, use_convolution=False):
             img_y[1:, :, :] = img[1:, :, :] - img[-1:, :, :]
     else:
         if gradient_type.value == GradientType.FORWARD.value:
-            img_y = convolve_image(img, np.array([[0, 1, 0],
-                                                  [0, -1, 0],
-                                                  [0, 0, 0]]))
+            img_y = convolve_image(img, np.array(FWRD_Y_GRADIENT))
         if gradient_type.value == GradientType.CENTERED.value:
-            img_y = convolve_image(img, np.array([[0, 0.5, 0],
-                                                  [0, 0, 0],
-                                                  [0, -0.5, 0]]))
+            img_y = convolve_image(img, np.array(CENTER_Y_GRADIENT))
         if gradient_type.value == GradientType.BACKWARD.value:
-            img_y = convolve_image(img, np.array([[0, 0, 0],
-                                                  [0, 1, 0],
-                                                  [0, -1, 0]]))
+            img_y = convolve_image(img, np.array(BWRD_Y_GRADIENT))
     return img_y
 
 
@@ -94,13 +91,25 @@ def div(img_x, img_y, gradient_type=GradientType.BACKWARD, p=2, epsilon=0):
     return gradx(np.multiply(img_x, mod_p), gradient_type) + grady(np.multiply(img_y, mod_p), gradient_type)
 
 
-def psnr(img1, img2):
-    mse = (1 / np.size(img1)) * np.sum((img1 - img2) ** 2)
-    max_intensity = np.max(img1)
+def psnr(img_original, img_noise):
+    """
+
+    :param img_original: Noise-free image
+    :param img_noise: Noisy image
+    :return: Peak signal to noise ratio
+    """
+    mse = (1 / np.size(img_original)) * np.sum((img_original - img_noise) ** 2)
+    max_intensity = np.max(img_original)
     return 20 * np.log10(max_intensity / np.sqrt(mse))
 
 
 def convolve_image(img, kernel):
+    """
+
+    :param img: RGB image to which we apply convolution.
+    :param kernel: The matrix to use for the convolution operation.
+    :return: RGB image with the convolution operator applied.
+    """
     img_conv = np.zeros(img.shape)
     img_conv[:, :, 0] = sp.signal.convolve2d(img[:, :, 0], kernel, mode="same")
     img_conv[:, :, 1] = sp.signal.convolve2d(img[:, :, 1], kernel, mode="same")
@@ -109,6 +118,15 @@ def convolve_image(img, kernel):
 
 
 def fast_noise_std_estimation(img):
+    """
+    :param img: An RGB image
+    :return: An estimation for the standard deviation (std) of the gaussian noise applied.
+    This estimation is achieved by calculating the average of the std for the three channels.
+    Reference for the std approximation for a grayscale image:
+        Reference: J. Immerkaer, “Fast Noise Variance Estimation”,
+        Computer Vision and Image Understanding,
+        Vol. 64, No. 2, pp. 300-302, Sep. 1996 [PDF]
+    """
     kernel = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]])
     convolution_result = np.sum(np.abs(convolve_image(img, kernel)))
     factor = np.sqrt(np.pi / 2) / (3 * 6 * (img.shape[0] - 2) * (img.shape[1] - 2)) * convolution_result
