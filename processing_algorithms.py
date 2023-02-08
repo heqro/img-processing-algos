@@ -32,10 +32,10 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     prior_values = np.zeros(n_it)
     fidelity_values = np.zeros(n_it)
     mass_loss_values = np.zeros(n_it)
+    psnr_values = np.zeros(n_it)
     im_approx = im_noise
 
     for i in range(n_it):
-        print('Iteración', i)
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
         im_y = im_tools.grady(im_approx, GradientType.FORWARD)
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
@@ -46,9 +46,6 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         # Save values
         energy_values[i], prior_values[i], fidelity_values[i] = p_energy()
         mass_loss_values[i] = verify_mass_conservation()
-        print('En:', energy_values[i], 'Pr:', prior_values[i], 'Fi:', fidelity_values[i], 'Mass:', mass_loss_values[i],
-              end='')
         if im_orig is not None:
-            print(" PSNR", im_tools.psnr(im_approx, im_orig), end='')
-        print('')
-    return im_approx
+            psnr_values[i] = im_tools.psnr(im_approx, im_orig)
+    return im_approx, energy_values, prior_values, fidelity_values, mass_loss_values, psnr_values
