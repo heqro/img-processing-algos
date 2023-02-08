@@ -153,11 +153,17 @@ def plot_model_parameters(image, energy, prior, fidelity, mass, time_step,
         pp.close()
 
 
-def print_psnr_data(psnr_values, early_stoppage_index):
-    print("########### GAIN ###########")
-    print("Gain when algorithm ends:", psnr_values[-1] - psnr_values[0])
-    print("Gain with proposed stoppage point", psnr_values[early_stoppage_index] - psnr_values[0])
-    print("Gain with respect to max psnr_value:", np.max(psnr_values) - psnr_values[0])
+def print_psnr_data(psnr_values, proposed_stoppage_index):
+    proposed_psnr = psnr_values[proposed_stoppage_index]
+    max_psnr = np.max(psnr_values)
+    start_psnr = psnr_values[0]
+    print("########### PSNR ###########")
+    print("Maximum relative gain (all iterations):",
+          np.abs(max_psnr - start_psnr) / np.abs(max_psnr))
+    print("Relative gain (proposed stoppage point vs. starting point)",
+          np.abs(proposed_psnr - start_psnr) / np.abs(proposed_psnr))
+    print("Relative error (maximum value vs. proposed stoppage point):",
+          np.abs(max_psnr - proposed_psnr) / np.abs(max_psnr))
 
 
 def plot_image_subtraction(img1, img2, title="Image subtraction results"):
@@ -168,3 +174,4 @@ def plot_image_subtraction(img1, img2, title="Image subtraction results"):
     plt.title(title)
     plt.axis('scaled')
     plt.show()
+
