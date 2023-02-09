@@ -132,3 +132,65 @@ def fast_noise_std_estimation(img):
     factor = np.sqrt(np.pi / 2) / (3 * 6 * (img.shape[0] - 2) * (img.shape[1] - 2)) * convolution_result
     return factor
 
+
+def tf_grad_x(image, gradient_type: GradientType):
+    """
+
+    :param image: tensor image of shape (1,H,W,C)
+    :param gradient_type: the kernel associated to the finite difference formula
+    we want to use.
+    :return: the mapping of the image gradient along the x-axis
+    using the finite approximation formula of type gradient_type.
+    """
+    # calculate gradient of a
+    import tensorflow as tf
+    tf_x_filter = tf.Variable(tf.zeros(shape=(3, 3)), trainable=False)
+
+    if gradient_type.value == GradientType.FORWARD.value:
+        tf_x_filter.assign(FWRD_X_GRADIENT)
+
+    if gradient_type.value == GradientType.CENTERED.value:
+        tf_x_filter.assign(CENTER_X_GRADIENT)
+
+    if gradient_type.value == GradientType.BACKWARD.value:
+        tf_x_filter.assign(BWRD_X_GRADIENT)
+
+    tf_x_filter = tf.reshape(tf_x_filter, [3, 3, 1, 1])
+    tf_img_red_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 0], -1), tf_x_filter,
+                                strides=[1, 1, 1, 1], padding="SAME")
+    tf_img_green_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 1], -1), tf_x_filter,
+                                  strides=[1, 1, 1, 1], padding="SAME")
+    tf_img_blue_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 2], -1), tf_x_filter,
+                                 strides=[1, 1, 1, 1], padding="SAME")
+    return tf.concat([tf_img_red_x, tf_img_green_x, tf_img_blue_x], -1)
+
+
+def tf_grad_y(image, gradient_type: GradientType):
+    """
+
+    :param image: tensor image of shape (1,H,W,C)
+    :param gradient_type: the kernel associated to the finite difference formula
+    we want to use.
+    :return: the mapping of the image gradient along the y-axis
+    using the finite approximation formula of type gradient_type.
+    """
+    import tensorflow as tf
+    tf_x_filter = tf.Variable(tf.zeros(shape=(3, 3)), trainable=False)
+
+    if gradient_type.value == GradientType.FORWARD.value:
+        tf_x_filter.assign(FWRD_Y_GRADIENT)
+
+    if gradient_type.value == GradientType.CENTERED.value:
+        tf_x_filter.assign(CENTER_Y_GRADIENT)
+
+    if gradient_type.value == GradientType.BACKWARD.value:
+        tf_x_filter.assign(BWRD_Y_GRADIENT)
+
+    tf_x_filter = tf.reshape(tf_x_filter, [3, 3, 1, 1])
+    tf_img_red_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 0], -1), tf_x_filter,
+                                strides=[1, 1, 1, 1], padding="SAME")
+    tf_img_green_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 1], -1), tf_x_filter,
+                                  strides=[1, 1, 1, 1], padding="SAME")
+    tf_img_blue_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 2], -1), tf_x_filter,
+                                 strides=[1, 1, 1, 1], padding="SAME")
+    return tf.concat([tf_img_red_x, tf_img_green_x, tf_img_blue_x], -1)
