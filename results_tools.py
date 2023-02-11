@@ -86,7 +86,14 @@ def plot_denoising_results(img_orig, img_noise, img_denoised, energy, prior, fid
     sec_x = ax4.secondary_xaxis('top', functions=(step2it, it2step))
     sec_x.set_xlabel('iterations')
 
-    plt.show()
+    if show_plot:
+        plt.show()
+
+    if save_pdf:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(pdf_name + '.pdf')
+        pp.savefig(fig)
+        pp.close()
 
 
 def plot_model_parameters(image, energy, prior, fidelity, mass, time_step,
@@ -174,4 +181,3 @@ def plot_image_subtraction(img1, img2, title="Image subtraction results"):
     plt.title(title)
     plt.axis('scaled')
     plt.show()
-
