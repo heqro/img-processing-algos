@@ -7,3 +7,4 @@ test_images/elo.jpg
 tftesting.py
 
 test_images/person.jpg
+*.pdf
