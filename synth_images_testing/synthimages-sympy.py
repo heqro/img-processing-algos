@@ -1,4 +1,4 @@
-from sympy import *
+from sympy import exp
 from sympy.abc import x, y
 from sympy.plotting import plot3d
 
