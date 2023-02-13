@@ -99,7 +99,8 @@ def psnr(img_original, img_noise):
     :return: Peak signal to noise ratio
     """
     mse = (1 / np.size(img_original)) * np.sum((img_original - img_noise) ** 2)
-    max_intensity = np.max(img_original)
+    # max_intensity = np.max(img_original)
+    max_intensity = 1.0
     return 20 * np.log10(max_intensity / np.sqrt(mse))
 
 
