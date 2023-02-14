@@ -36,3 +36,8 @@ def tf_load_normalized_image(path: str):
 
 def tf_add_gaussian_noise(img, avg: float, std: float):
     return img + 1 * np.random.normal(avg, std, img.shape)
+
+
+def tf_add_mask(tf_img, initial_value: float):
+    import tensorflow as tf
+    return tf.Variable(initial_value * tf.ones(shape=tf_img.shape), name="lambda_x", trainable=True)
