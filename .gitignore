@@ -4,6 +4,8 @@ __pycache__
 hacking_around_results/
 
 test_images/elo.jpg
+test_images/640px-Large_Scaled_Forest_Lizard.jpeg
+test_images/Large_Scaled_Forest_Lizard.jpg
 tftesting.py
 
 test_images/person.jpg

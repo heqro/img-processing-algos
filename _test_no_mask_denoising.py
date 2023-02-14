@@ -15,6 +15,9 @@ iterations = 700
 img_original = preprocessing.tf_load_normalized_image(path="noise_test_images/img_79")
 img_noise = preprocessing.tf_add_gaussian_noise(img_original, avg=0, std=0.15)
 
+#####################
+#   Load database   #
+#####################
 df = coefficients_data_handler.load_data(path="synth_images_testing/results_log/coefficients.csv")
 _, H, W, C = img_noise.shape
 proposed_coefficient = coefficients_data_handler.get_stoppage_coefficient(df, height=H, width=W, noise_std=0.1)
