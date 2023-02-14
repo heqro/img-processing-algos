@@ -101,7 +101,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     psnr_image = None
 
     for i in tf.range(n_it):
-        print("Iteration", i.numpy())
+        # print("Iteration", i.numpy())
         with tf.GradientTape() as tape:
             energy, fidelity, prior = tf_cost(tf_im_approx=tf_im_approx, tf_im_noise=tf_im_noise,
                                               tf_lambda=tf_lambda, p=p, epsilon=epsilon)
@@ -118,14 +118,14 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             psnr_values += [tf.image.psnr(tf_im_orig, tf_im_approx, max_val=1.0)]
 
         #### Early stoppage (stop whenever psnr starts declining)
-        # if i.numpy() > 2 and psnr_values[-1] < psnr_values[-2]:
-        #     proposed_stop = i.numpy() - 1
-        #     psnr_image = None
-        #     return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
-        #         np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
-
-        if proposed_coefficient * fidelity.numpy() < estimated_variance * omega_size: # if proposed coefficient == -1 then we run to the end
-            proposed_stop = i.numpy()
-            psnr_image = tf.constant(tf_im_approx)
+        if i.numpy() > 2 and psnr_values[-1] < psnr_values[-2]:
+            proposed_stop = i.numpy() - 1
+            psnr_image = None
+            return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
+                np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
+        #
+        # if proposed_coefficient * fidelity_values[-1] < estimated_variance: # if proposed coefficient == -1 then we run to the end
+        #     proposed_stop = i.numpy()
+        #     psnr_image = tf.constant(tf_im_approx)
     return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
         np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda

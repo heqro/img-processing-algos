@@ -51,9 +51,11 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
 
         if im_orig is not None:
             psnr_values += [im_tools.psnr(im_orig, im_approx)]
-        if fidelity < estimated_variance:
-            proposed_stop = i
-            psnr_image = im_approx
+        #### Early stoppage (stop whenever psnr starts declining)
+        if i > 2 and psnr_values[-1] < psnr_values[-2]:
+            proposed_stop = i - 1
+            psnr_image = None
+            break
 
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
