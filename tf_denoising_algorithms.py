@@ -58,7 +58,7 @@ def tf_mass_conservation(tf_im_approx: tf.Variable, tf_im_noise: tf.constant):
 
 def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float, dt: float, n_it: int,
                        p=2.0, epsilon=0.0, cost_function_type: CostFunctionType = CostFunctionType.NO_MASK,
-                       tf_im_orig=None):
+                       tf_im_orig=None, proposed_coefficient=-1.0):
     def get_cost_function():
         if cost_function_type.value == CostFunctionType.NO_MASK.value:
             return tf_constant_lambda_cost
@@ -101,6 +101,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     psnr_image = None
 
     for i in tf.range(n_it):
+        print("Iteration", i.numpy())
         with tf.GradientTape() as tape:
             energy, fidelity, prior = tf_cost(tf_im_approx=tf_im_approx, tf_im_noise=tf_im_noise,
                                               tf_lambda=tf_lambda, p=p, epsilon=epsilon)
@@ -123,8 +124,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
         #     return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
         #         np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
 
-        if fidelity.numpy() < estimated_variance * omega_size:
-            proposed_stop = i
+        if proposed_coefficient * fidelity.numpy() < estimated_variance * omega_size: # if proposed coefficient == -1 then we run to the end
+            proposed_stop = i.numpy()
             psnr_image = tf.constant(tf_im_approx)
     return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
         np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
