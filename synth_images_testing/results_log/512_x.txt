@@ -1,0 +1,64 @@
+Processing images of width: 512
+Applying noise of zero mean and std: 0.05
+Analyzing image synth_images_testing/synth_img_512_64.png
+10.616657257080078 0.4130221378584612
+Analyzing image synth_images_testing/synth_img_512_128.png
+9.887659788131714 0.3775070057129493
+Analyzing image synth_images_testing/synth_img_512_192.png
+14.826374053955078 0.36376167552479355
+Analyzing image synth_images_testing/synth_img_512_256.png
+20.970252513885498 0.3593147635078465
+Analyzing image synth_images_testing/synth_img_512_320.png
+27.0404109954834 0.3552441414095996
+Analyzing image synth_images_testing/synth_img_512_384.png
+34.58962845802307 0.35105666273331604
+Analyzing image synth_images_testing/synth_img_512_448.png
+39.87848138809204 0.3499988652808989
+Analyzing image synth_images_testing/synth_img_512_512.png
+48.0841498374939 0.35062636503700373
+Analyzing image synth_images_testing/synth_img_512_576.png
+53.47794318199158 0.3496927465100434
+Analyzing image synth_images_testing/synth_img_512_640.png
+62.02040147781372 0.3498364902266165
+Applying noise of zero mean and std: 0.1
+Analyzing image synth_images_testing/synth_img_512_64.png
+13.068749189376831 0.4005583144506474
+Analyzing image synth_images_testing/synth_img_512_128.png
+21.853444814682007 0.37339964615609594
+Analyzing image synth_images_testing/synth_img_512_192.png
+34.00197410583496 0.3571507232627984
+Analyzing image synth_images_testing/synth_img_512_256.png
+48.62634992599487 0.35406606984907135
+Analyzing image synth_images_testing/synth_img_512_320.png
+67.52229619026184 0.35164131462859793
+Analyzing image synth_images_testing/synth_img_512_384.png
+78.61522436141968 0.35295649029751386
+Analyzing image synth_images_testing/synth_img_512_448.png
+92.8274199962616 0.3516298557369819
+Analyzing image synth_images_testing/synth_img_512_512.png
+111.7048544883728 0.348581306644855
+Analyzing image synth_images_testing/synth_img_512_576.png
+124.75851082801819 0.3479924870878812
+Analyzing image synth_images_testing/synth_img_512_640.png
+138.8714723587036 0.34794271083520245
+Applying noise of zero mean and std: 0.15
+Analyzing image synth_images_testing/synth_img_512_64.png
+23.720521688461304 0.39312400336537967
+Analyzing image synth_images_testing/synth_img_512_128.png
+40.56455659866333 0.36916327454481607
+Analyzing image synth_images_testing/synth_img_512_192.png
+66.49651503562927 0.35809857241726206
+Analyzing image synth_images_testing/synth_img_512_256.png
+97.62593269348145 0.35178820265029254
+Analyzing image synth_images_testing/synth_img_512_320.png
+116.3851625919342 0.3518716011621392
+Analyzing image synth_images_testing/synth_img_512_384.png
+137.0765790939331 0.3497117893977896
+Analyzing image synth_images_testing/synth_img_512_448.png
+154.46820497512817 0.3498001487787104
+Analyzing image synth_images_testing/synth_img_512_512.png
+175.70078539848328 0.3487899686178648
+Analyzing image synth_images_testing/synth_img_512_576.png
+194.4756944179535 0.3470688568669209
+Analyzing image synth_images_testing/synth_img_512_640.png
+218.90364933013916 0.3470276932322638

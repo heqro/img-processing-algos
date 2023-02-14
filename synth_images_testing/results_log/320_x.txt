@@ -1,0 +1,63 @@
+Processing images of width: 320
+Applying noise of zero mean and std: 0.05
+4.87700891494751 0.4220969543315115
+Analyzing image synth_images_testing/synth_img_320_128.png
+7.787322521209717 0.3809811207075923
+Analyzing image synth_images_testing/synth_img_320_192.png
+10.910202026367188 0.37022977498587667
+Analyzing image synth_images_testing/synth_img_320_256.png
+13.77746033668518 0.36271190775211704
+Analyzing image synth_images_testing/synth_img_320_320.png
+17.613379955291748 0.3582062725343131
+Analyzing image synth_images_testing/synth_img_320_384.png
+21.112818717956543 0.3611354356086244
+Analyzing image synth_images_testing/synth_img_320_448.png
+25.253987312316895 0.3544190282316661
+Analyzing image synth_images_testing/synth_img_320_512.png
+27.832384824752808 0.3547571444087769
+Analyzing image synth_images_testing/synth_img_320_576.png
+32.88025689125061 0.355094845960636
+Analyzing image synth_images_testing/synth_img_320_640.png
+34.99859166145325 0.3549343990516333
+Applying noise of zero mean and std: 0.1
+Analyzing image synth_images_testing/synth_img_320_64.png
+10.071611166000366 0.4104197488776412
+Analyzing image synth_images_testing/synth_img_320_128.png
+17.4155752658844 0.37534629774918776
+Analyzing image synth_images_testing/synth_img_320_192.png
+25.453983068466187 0.367556102278506
+Analyzing image synth_images_testing/synth_img_320_256.png
+32.39381194114685 0.3583086044548191
+Analyzing image synth_images_testing/synth_img_320_320.png
+40.28441095352173 0.3554879998110219
+Analyzing image synth_images_testing/synth_img_320_384.png
+47.59744048118591 0.35418474197816663
+Analyzing image synth_images_testing/synth_img_320_448.png
+57.71413803100586 0.3533998879018057
+Analyzing image synth_images_testing/synth_img_320_512.png
+62.82558059692383 0.3531422184746178
+Analyzing image synth_images_testing/synth_img_320_576.png
+70.65020608901978 0.35078363392568057
+Analyzing image synth_images_testing/synth_img_320_640.png
+78.97617959976196 0.3523769257252232
+Applying noise of zero mean and std: 0.15
+Analyzing image synth_images_testing/synth_img_320_64.png
+18.674163103103638 0.3964157636376641
+Analyzing image synth_images_testing/synth_img_320_128.png
+32.35131883621216 0.37578076435686475
+Analyzing image synth_images_testing/synth_img_320_192.png
+51.814157485961914 0.36485901811492605
+Analyzing image synth_images_testing/synth_img_320_256.png
+78.67739176750183 0.3566003320451667
+Analyzing image synth_images_testing/synth_img_320_320.png
+88.89382743835449 0.35786000047782995
+Analyzing image synth_images_testing/synth_img_320_384.png
+92.6665780544281 0.3553045435896608
+Analyzing image synth_images_testing/synth_img_320_448.png
+120.43893933296204 0.35126692707154716
+Analyzing image synth_images_testing/synth_img_320_512.png
+134.25052571296692 0.35098495271174435
+Analyzing image synth_images_testing/synth_img_320_576.png
+142.0484642982483 0.3513332322722236
+Analyzing image synth_images_testing/synth_img_320_640.png
+153.61805939674377 0.35205314757193334

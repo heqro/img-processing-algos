@@ -181,3 +181,11 @@ def plot_image_subtraction(img1, img2, title="Image subtraction results"):
     plt.title(title)
     plt.axis('scaled')
     plt.show()
+
+
+def plot_simple_image(img):
+    plt.figure()
+    plt.imshow(img)
+    plt.axis('off')
+    plt.axis('scaled')
+    plt.show()
