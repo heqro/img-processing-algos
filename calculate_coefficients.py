@@ -14,7 +14,7 @@ p = 2
 epsilon = 0
 fidelity_coefficient = 0.5
 time_step = 1e-2
-iterations = 10000
+iterations = 5000
 noises = [0.05, 0.1, 0.15]
 
 import pandas as pd
@@ -144,10 +144,11 @@ def process_synth_img(index):
 
 import concurrent.futures
 
-num_threads = 3
+indexes = [1, 8, 9, 10]
+num_threads = 4
 with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
     futures = []
     for i in range(num_threads):
-        future = executor.submit(process_synth_img, i + 2)
+        future = executor.submit(process_synth_img, indexes[i])
         futures.append(future)
     concurrent.futures.wait(futures)
