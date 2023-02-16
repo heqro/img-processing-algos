@@ -1,41 +1,72 @@
 import coefficients_data_handler
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import interpolate
+
+import preprocessing
 
 #####################
 #   Load database   #
 #####################
-df = coefficients_data_handler.load_data(path="synth_images_testing/results_log/coefficients.csv")
+db_index = 4  # pick one: 1, 3, 4
+df = coefficients_data_handler.load_data(
+    path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP2.csv')
 
 dims = 64 + np.arange(10) * 64
 x = dims
 y = dims
 
 X, Y = np.meshgrid(x, y)
-Z_1 = np.zeros(X.shape)
-Z_2 = np.zeros(X.shape)
-Z_3 = np.zeros(X.shape)
+noise_levels = [0.05, 0.10, 0.15]
+Z = []
+for noise in noise_levels:
+    Z.append(np.zeros(X.shape))
 
 for xx in range(len(dims)):
     for yy in range(len(dims)):
-        Z_1[xx, yy] = coefficients_data_handler.get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], 0.05)
-        Z_2[xx, yy] = coefficients_data_handler.get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], 0.1)
-        Z_3[xx, yy] = coefficients_data_handler.get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], 0.15)
+        for index in range(len(noise_levels)):  # load points for each noise level
+            Z[index][xx, yy] = coefficients_data_handler.get_stoppage_coefficient(
+                df, X[xx, yy], Y[xx, yy], noise_levels[index])
 
-fig = plt.figure(figsize=(7, 7))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(X, Y, Z_3, c='red', marker='o', label="std=0.15")
-ax.scatter(X, Y, Z_1, c='green', marker='o', label="std=0.1")
-ax.scatter(X, Y, Z_2, c='orange', marker='o', label="std=0.05")
-ax.set_xticks(dims)
-ax.set_yticks(dims)
-ax.legend(loc="upper left")
-plt.title("Proposed PSNR stoppage linear coefficients")
+################################
+# Plot points + bicubic spline #
+################################
+spline_funs = []
+x_points = np.arange(64, 640, 0.5)
+y_points = np.arange(64, 640, 0.5)
+grid_X, grid_Y = np.meshgrid(x_points, y_points)
+for index in range(len(noise_levels)): # load bicubic splines
+    spline_fun = interpolate.SmoothBivariateSpline(X.flatten(), Y.flatten(), Z[index].flatten())
+    spline_funs.append(spline_fun)
 
+fig = plt.figure(figsize=(30, 7))
+colors = ['green', 'goldenrod', 'red']
+
+ax = fig.add_subplot(1, 4, 1)
+img = preprocessing.load_normalized_image(f'synth_images_testing/synth_img_{db_index}/synth_img_256_256.png')
+ax.imshow(img)
+ax.axis('off')
+ax.axis('scaled')
+plt.title(f'Synthetic image {db_index}')
+
+
+for index in range(len(noise_levels)):
+    ax = fig.add_subplot(1, 4, index + 2, projection='3d')
+    ax.scatter(X, Y, Z[index], c=colors[index], marker='o', label=f'std={noise_levels[index]}')
+    ax.plot_surface(grid_X, grid_Y, spline_funs[index](x_points, y_points), cmap='plasma', alpha=.5)
+    ax.set_xticks(dims)
+    ax.set_yticks(dims)
+    ax.legend(loc="upper left")
+
+fig.suptitle(f'Maximum values for PSNR - synthetic image {db_index}')
+
+# Save to pdf
 from matplotlib.backends.backend_pdf import PdfPages
 
-pp = PdfPages('database_plots/AllPointsTogether.pdf')
+pp = PdfPages(f'database_plots/synthetic_database_{db_index}.pdf')
 pp.savefig(fig)
 pp.close()
 
+# Show plot
+plt.tight_layout()
 plt.show()

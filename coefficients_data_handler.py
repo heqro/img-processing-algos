@@ -51,3 +51,21 @@ def get_stoppage_coefficient(data: DataFrame, height: float, width: float, noise
         raise ValueError("The proposed height or weight values are too different to the DataFrame values.")
     closest_point = filtered_h_w.loc[filtered_h_w.apply(distance, axis=1, args=(height, width)).idxmin()]
     return closest_std_coefficient(closest_point, noise_std)
+
+
+def get_spline(db_index, noise_std):
+    from scipy import interpolate
+    dims = 64 + np.arange(10) * 64 # assume we have this configuration
+    x = dims
+    y = dims
+
+    X, Y = np.meshgrid(x, y)
+
+    df = load_data(
+        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP2.csv')
+    Z = np.zeros(X.shape)
+    for xx in range(len(dims)):
+        for yy in range(len(dims)):
+            Z[xx, yy] = get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], noise_std)
+
+    return interpolate.SmoothBivariateSpline(X.flatten(), Y.flatten(), Z.flatten())

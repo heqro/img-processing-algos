@@ -69,6 +69,7 @@ def plot_denoising_results(img_orig, img_noise, img_denoised, energy, prior, fid
     plt.plot(x_axis, psnr)
     if stop != -1:
         plt.plot(x_axis[stop], psnr[stop], "s", label="proposed stoppage point")
+    plt.plot(x_axis[np.argmax(psnr)], psnr[np.argmax(psnr)], "s", label="psnr maximum")
     plt.title("PSNR (dB)")
     plt.xlabel('time')
     sec_x = ax3.secondary_xaxis('top', functions=(step2it, it2step))
@@ -173,19 +174,36 @@ def print_psnr_data(psnr_values, proposed_stoppage_index):
           np.abs(max_psnr - proposed_psnr) / np.abs(max_psnr))
 
 
-def plot_image_subtraction(img1, img2, title="Image subtraction results"):
+def plot_image_subtraction(img1, img2, title="Image subtraction results", show_plot=True, save_pdf=False, pdf_name=""):
     subtraction = 1 - np.abs(img1 - img2)
-    plt.figure()
+    fig = plt.figure()
     plt.imshow(subtraction)
     plt.axis('off')
     plt.title(title)
     plt.axis('scaled')
-    plt.show()
+
+    if show_plot:
+        plt.show()
+
+    if save_pdf:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(pdf_name + '.pdf')
+        pp.savefig(fig)
+        pp.close()
 
 
-def plot_simple_image(img):
-    plt.figure()
+def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name=""):
+    fig = plt.figure()
     plt.imshow(img)
     plt.axis('off')
     plt.axis('scaled')
     plt.show()
+
+    if show_plot:
+        plt.show()
+
+    if save_pdf:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(pdf_name + '.pdf')
+        pp.savefig(fig)
+        pp.close()

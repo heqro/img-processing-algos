@@ -1,3 +1,4 @@
+import sys
 import time
 
 import numpy as np
@@ -13,7 +14,7 @@ p = 2
 epsilon = 0
 fidelity_coefficient = 0.5
 time_step = 1e-2
-iterations = 1000
+iterations = 10000
 noises = [0.05, 0.1, 0.15]
 
 import pandas as pd
@@ -54,32 +55,99 @@ df = pd.DataFrame(cols)
 # df.to_csv('synth_images_testing/synth_img_1/results_log/coefficientsP2.csv', mode='a', index=False, header=False)  # else
 #
 #
-for x_limit in dimensions:  # ideally you want "dimensions" in here
-    print("Processing images of width:", x_limit)
-    for y_limit in dimensions:
-        print("height:", y_limit)
-        noise_coefs = [0] * len(noises)
-        for i in range(len(noises)):
-            noise = noises[i]
-            print("Applying noise of value:", noise)
-            path = 'synth_images_testing/synth_img_4/synth_img_' + str(x_limit) + "_" + str(y_limit) + ".png"
-            start = time.time()
-            im = preprocessing.load_normalized_image(path)
-            im_noise = preprocessing.add_gaussian_noise(im, 0, noise)
-            estimated_variance = im_tools.fast_noise_std_estimation(im_noise) ** 2
-            u, energy, prior, fidelity, mass, psnr, stop, _ = p_laplacian_denoising_algorithms.p_laplacian_denoising(
-                im_noise=im_noise, p=p,
-                fidelity_coef=fidelity_coefficient,
-                epsilon=epsilon, dt=time_step,
-                n_it=iterations,
-                im_orig=im)
-            end = time.time()
-            print('T',end - start, 'Coef',estimated_variance / fidelity[stop], 'PSNR_end', psnr[-1], 'PSNR_start', psnr[0])
-            noise_coefs[i] = estimated_variance / fidelity[stop]
-        new_row = pd.Series({'width': x_limit, 'height': y_limit, 'noise_1': noises[0],
-                             'noise_1_coef': noise_coefs[0], 'noise_2': noises[1],
-                             'noise_2_coef': noise_coefs[1], 'noise_3': noises[2],
-                             'noise_3_coef': noise_coefs[2]})
-        temp_df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
-        temp_df.to_csv('synth_images_testing/synth_img_4/results_log/coefficientsP2_basic.csv', mode='a', index=False,
-                       header=False)
+stdout = sys.stdout
+import os
+
+# Get the current working directory
+cwd = os.getcwd()
+
+# Print the current working directory
+print("Saving file to:", cwd)
+
+
+# for index in [2, 3, 4]:
+#     with open('output' + str(index) + '.txt') as f:
+#         sys.stdout = f
+#         for x_limit in dimensions:  # ideally you want "dimensions" in here
+#             print("Processing images of width:", x_limit)
+#             for y_limit in dimensions:
+#                 print("height:", y_limit)
+#                 noise_coefs = [0] * len(noises)
+#                 omega_size = x_limit * y_limit * 3
+#                 for i in range(len(noises)):
+#                     noise = noises[i]
+#                     print("Applying noise of value:", noise)
+#                     path = 'synth_images_testing/synth_img_' + str(index) + '/synth_img_' + str(x_limit) + "_" + str(
+#                         y_limit) + ".png"
+#                     start = time.time()
+#                     im = preprocessing.load_normalized_image(path)
+#                     im_noise = preprocessing.add_gaussian_noise(im, 0, noise)
+#                     # estimated_variance = im_tools.fast_noise_std_estimation(im_noise) ** 2
+#                     u, energy, prior, fidelity, mass, psnr, stop, _ = p_laplacian_denoising_algorithms.p_laplacian_denoising(
+#                         im_noise=im_noise, p=p,
+#                         fidelity_coef=fidelity_coefficient,
+#                         epsilon=epsilon, dt=time_step,
+#                         n_it=iterations,
+#                         im_orig=im)
+#                     end = time.time()
+#                     noise_coefs[i] = fidelity[stop] / (noise ** 2 * omega_size * fidelity_coefficient)
+#                     print('T', end - start, 'Coef', noise_coefs[i], 'PSNR_end', psnr[-1], 'PSNR_start',
+#                           psnr[0], 'it', len(fidelity))
+#                 new_row = pd.Series({'width': x_limit, 'height': y_limit, 'noise_1': noises[0],
+#                                      'noise_1_coef': noise_coefs[0], 'noise_2': noises[1],
+#                                      'noise_2_coef': noise_coefs[1], 'noise_3': noises[2],
+#                                      'noise_3_coef': noise_coefs[2]})
+#                 temp_df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
+#                 temp_df.to_csv('synth_images_testing/synth_img_' + str(index) + '/results_log/coefficientsP2.csv',
+#                                mode='a', index=False,
+#                                header=False)
+#         sys.stdout = stdout
+
+def process_synth_img(index):
+    # with open('output' + str(index) + '.txt') as f:
+    #     sys.stdout = f
+    for x_limit in dimensions:  # ideally you want "dimensions" in here
+        # print("Processing images of width:", x_limit)
+        for y_limit in dimensions:
+            # print("height:", y_limit)
+            noise_coefs = [0] * len(noises)
+            omega_size = x_limit * y_limit * 3
+            for i in range(len(noises)):
+                noise = noises[i]
+                # print("Applying noise of value:", noise)
+                path = 'synth_images_testing/synth_img_' + str(index) + '/synth_img_' + str(x_limit) + "_" + str(
+                    y_limit) + ".png"
+                start = time.time()
+                im = preprocessing.load_normalized_image(path)
+                im_noise = preprocessing.add_gaussian_noise(im, 0, noise)
+                # estimated_variance = im_tools.fast_noise_std_estimation(im_noise) ** 2
+                u, energy, prior, fidelity, mass, psnr, stop, _ = p_laplacian_denoising_algorithms.p_laplacian_denoising(
+                    im_noise=im_noise, p=p,
+                    fidelity_coef=fidelity_coefficient,
+                    epsilon=epsilon, dt=time_step,
+                    n_it=iterations,
+                    im_orig=im)
+                end = time.time()
+                noise_coefs[i] = fidelity[stop] / (noise ** 2 * omega_size * fidelity_coefficient)
+                print('W_H_ID_NOISE',x_limit,y_limit,index,noise,'T', end - start, 'Coef', noise_coefs[i], 'PSNR_end', psnr[-1], 'PSNR_start',
+                      psnr[0], 'it', len(fidelity))
+            new_row = pd.Series({'width': x_limit, 'height': y_limit, 'noise_1': noises[0],
+                                 'noise_1_coef': noise_coefs[0], 'noise_2': noises[1],
+                                 'noise_2_coef': noise_coefs[1], 'noise_3': noises[2],
+                                 'noise_3_coef': noise_coefs[2]})
+            temp_df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
+            temp_df.to_csv('synth_images_testing/synth_img_' + str(index) + '/results_log/coefficientsP2.csv',
+                           mode='a', index=False,
+                           header=False)
+        # sys.stdout = stdout
+
+
+import concurrent.futures
+
+num_threads = 3
+with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+    futures = []
+    for i in range(num_threads):
+        future = executor.submit(process_synth_img, i + 2)
+        futures.append(future)
+    concurrent.futures.wait(futures)

@@ -3,15 +3,16 @@ from im_tools import GradientType
 import numpy as np
 
 
-def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, im_orig=None):
+def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, mu=-1.0,
+                          im_orig=None):
     def p_energy() -> tuple[float, float, float]:
         """
 
         :return: The values for energy, prior and fidelity of the problem at the current iteration.
         """
 
-        prior_value = (1 / p) * np.sum(np.sqrt(im_x ** 2 + im_y ** 2) ** p) / omega_size
-        fidelity_value = fidelity_coef * np.sum((im_approx - im_noise) ** 2) / omega_size
+        prior_value = (1 / p) * np.sum(np.sqrt(im_x ** 2 + im_y ** 2) ** p)
+        fidelity_value = fidelity_coef * np.sum((im_approx - im_noise) ** 2)
         energy_value = prior_value + fidelity_value
         return energy_value, prior_value, fidelity_value
 
@@ -21,10 +22,10 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         :return: The difference in mass between the current image and the initial image.
         It serves as another check for the correctness of the algorithm.
         """
-        return (np.sum(im_approx) - np.sum(im_noise)) / omega_size
+        return np.sum(im_approx) - np.sum(im_noise)
 
     # Initialization
-    omega_size = im_noise.shape[0] * im_noise.shape[1]
+    omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
     energy_values = []
     prior_values = []
     fidelity_values = []
@@ -51,11 +52,18 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
 
         if im_orig is not None:
             psnr_values += [im_tools.psnr(im_orig, im_approx)]
+
         #### Early stoppage (stop whenever psnr starts declining)
-        if i > 2 and psnr_values[-1] < psnr_values[-2]:
+        # if i > 2 and psnr_values[-1] < psnr_values[-2]:
+        #     proposed_stop = i - 1
+        #     psnr_image = None
+        #     break
+
+        if fidelity_values[-1] / fidelity_coef < mu * estimated_variance * omega_size:
             proposed_stop = i - 1
-            psnr_image = None
-            break
+            psnr_image = im_approx
+            # print("keep doing your stuff", i)
+
 
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
