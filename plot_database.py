@@ -8,7 +8,7 @@ import preprocessing
 #####################
 #   Load database   #
 #####################
-db_index = 4  # pick one: 1, 3, 4
+db_index = 1
 df = coefficients_data_handler.load_data(
     path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP2.csv')
 
@@ -62,11 +62,11 @@ fig.suptitle(f'Maximum values for PSNR - synthetic image {db_index}')
 
 # Save to pdf
 from matplotlib.backends.backend_pdf import PdfPages
-
+plt.tight_layout()
 pp = PdfPages(f'database_plots/synthetic_database_{db_index}.pdf')
 pp.savefig(fig)
 pp.close()
 
 # Show plot
-plt.tight_layout()
-plt.show()
+
+# plt.show()

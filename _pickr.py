@@ -53,6 +53,6 @@ def process_img(img_index: int):
                                         save_pdf=True, show_plot=False,
                                         pdf_name=f'natural_images_analysis/img_{img_index}/analysis_{img_index}_{noise}')
         with open(f'natural_images_analysis/img_{img_index}/analysis.csv', mode='a') as file:
-            line = f'{img_index},{W},{H},{noise},{noise_std_estimation},{np.max(mass) / H * W * C},{time_step * len(mass)},'
+            line = f'{img_index},{W},{H},{noise},{noise_std_estimation},{np.max(np.abs(mass)) / H * W * C},{time_step * len(mass)},'
             line += results_tools.print_psnr_data(psnr, stop_dict)
             file.writelines(line)
