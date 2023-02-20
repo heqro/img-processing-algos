@@ -1,9 +1,11 @@
+from numpy import ndarray
+
 import im_tools
 from im_tools import GradientType
 import numpy as np
 
 
-def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, mu=-1.0,
+def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, mu: ndarray,
                           im_orig=None):
     def p_energy() -> tuple[float, float, float]:
         """
@@ -34,11 +36,9 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     im_approx = im_noise
 
     estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2
-    proposed_stop = -1
-    psnr_image = None
+    proposed_coefficients = np.zeros(len(mu))
+    psnr_images = [None] * len(mu)
 
-    # fidelity = 0
-    # while fidelity < estimated_variance: # early stoppage
     for i in range(n_it):
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
         im_y = im_tools.grady(im_approx, GradientType.FORWARD)
@@ -55,15 +55,18 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
 
         #### Early stoppage (stop whenever psnr starts declining)
         # if i > 2 and psnr_values[-1] < psnr_values[-2]:
-        #     proposed_stop = i - 1
-        #     psnr_image = None
+        #     proposed_coefficients = [i - 1]
+        #     psnr_images = None
         #     break
 
-        if fidelity_values[-1] / fidelity_coef < mu * estimated_variance * omega_size:
-            proposed_stop = i - 1
-            psnr_image = im_approx
-            # print("keep doing your stuff", i)
-
+        threshold = fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
+        indices = np.where(threshold < mu)[0]
+        if len(indices) > 0:
+            for index in indices:
+                proposed_coefficients[index] = i
+                psnr_images[index] = im_approx
+        else:
+            break
 
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
@@ -72,5 +75,5 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         # Gradient descent iteration
         im_approx = im_approx + dt * pde_value
     return im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
-        np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image
+        np.array(mass_loss_values), np.array(psnr_values), proposed_coefficients, psnr_images
 

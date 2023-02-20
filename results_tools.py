@@ -161,18 +161,16 @@ def plot_model_parameters(image, energy, prior, fidelity, mass, time_step,
         pp.close()
 
 
-def print_psnr_data(psnr_values, proposed_stoppage_index):
-    proposed_psnr = psnr_values[proposed_stoppage_index]
+def print_psnr_data(psnr_values, proposed_stoppage_dict: dict):
     max_psnr = np.max(psnr_values)
     start_psnr = psnr_values[0]
-    print("########### PSNR ###########")
-    print("Maximum relative gain (all iterations):",
-          np.abs(max_psnr - start_psnr) / np.abs(max_psnr))
-    print("Relative gain (proposed stoppage point vs. starting point)",
-          np.abs(proposed_psnr - start_psnr) / np.abs(proposed_psnr))
-    print("Relative error (maximum value vs. proposed stoppage point):",
-          np.abs(max_psnr - proposed_psnr) / np.abs(max_psnr))
-
+    msg = f'{np.abs(max_psnr - start_psnr) / np.abs(start_psnr)}'  # max relative gain
+    for entry in proposed_stoppage_dict.keys():
+        value = psnr_values[proposed_stoppage_dict.get(entry)]
+        msg += f',{np.abs(value - start_psnr) / np.abs(start_psnr)},'  # relative gain (coefficient)
+        msg += f'{np.abs(max_psnr - value) / np.abs(max_psnr)}'  # relative loss (coefficient)
+    msg += "\n"
+    return msg
 
 def plot_image_subtraction(img1, img2, title="Image subtraction results", show_plot=True, save_pdf=False, pdf_name=""):
     subtraction = 1 - np.abs(img1 - img2)
@@ -197,7 +195,6 @@ def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name=""):
     plt.imshow(img)
     plt.axis('off')
     plt.axis('scaled')
-    plt.show()
 
     if show_plot:
         plt.show()
@@ -207,3 +204,52 @@ def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name=""):
         pp = PdfPages(pdf_name + '.pdf')
         pp.savefig(fig)
         pp.close()
+    plt.close()
+
+
+def plot_model_curves(energy, prior, fidelity, mass, time_step,
+                      psnr_values, stop_dict: dict, title, show_plot=True, save_pdf=False, pdf_name=""):
+    def step2it(step):
+        return step / time_step
+
+    def it2step(it):
+        return it * time_step
+
+    x_axis = np.arange(len(energy)) * time_step
+
+    fig = plt.figure(figsize=(10,10))
+
+    ax = fig.add_subplot(1, 2, 1)
+
+    plt.plot(x_axis, energy, label="Energy")
+    plt.plot(x_axis, prior, label="Prior")
+    plt.plot(x_axis, fidelity, label="Fidelity")
+    plt.plot(x_axis, mass, label="Mass")
+    plt.legend(loc="upper right")
+    plt.xlabel('time')
+
+    sec_x = ax.secondary_xaxis('top', functions=(step2it, it2step))
+    sec_x.set_xlabel('iterations')
+
+    ax = fig.add_subplot(1, 2, 2)
+    plt.plot(x_axis, psnr_values)
+    for key in stop_dict.keys():
+        plt.plot(x_axis[stop_dict.get(key)], psnr_values[stop_dict.get(key)], "s", label=key)
+    plt.plot(x_axis[np.argmax(psnr_values)], psnr_values[np.argmax(psnr_values)], marker="o", color="black", label="Max")
+    plt.title("PSNR (dB)")
+    plt.xlabel('time')
+    sec_x = ax.secondary_xaxis('top', functions=(step2it, it2step))
+    sec_x.set_xlabel('iterations')
+    plt.legend(loc="lower right")
+
+    plt.suptitle(title)
+
+    if show_plot:
+        plt.show()
+
+    if save_pdf:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(f'{pdf_name}.pdf')
+        pp.savefig(fig)
+        pp.close()
+    plt.close()
