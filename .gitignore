@@ -12,3 +12,4 @@ test_images/person.jpg
 main.py
 _hacking_edge_detection.py
 calculate_coefficients.py
+_pickr.py
