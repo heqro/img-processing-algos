@@ -5,8 +5,21 @@ from im_tools import GradientType
 import numpy as np
 
 
-def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int, mu: ndarray,
-                          im_orig=None):
+def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int,
+                          mu: ndarray | None = None, im_orig=None) -> dict:
+    """
+    Applies ``n_it`` iterations of the gradient method to the generalized Tikhonov regularization model.
+    :param im_noise: an image with Gaussian noise n ~ N(0, sigma)
+    :param fidelity_coef: lambda fidelity coefficient that multiplies the fidelity term.
+    :param epsilon: tolerance to add to the gradient; useful if `p` = 1.
+    :param p: the `p` parameter in the Tikhonov regularization model.
+    :param dt: discretization step in time.
+    :param n_it: number of iterations to apply of the gradient
+    :param im_orig: the original image.
+    :param mu: if ``im_orig is not None``, a list of proposed stoppage coefficients to achieve the maximum for the PSNR value.
+    :return:
+    """
+
     def p_energy() -> tuple[float, float, float]:
         """
 
@@ -26,6 +39,16 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         """
         return np.sum(im_approx) - np.sum(im_noise)
 
+    def get_results_dict() -> dict:
+        """
+
+        :return: A dictionary containing the results for the algorithm.
+        """
+        return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
+                'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
+                'psnr': np.array(psnr_values), 'img_denoised': im_approx,
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
+
     # Initialization
     omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
     energy_values = []
@@ -35,9 +58,9 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     psnr_values = []
     im_approx = im_noise
 
-    estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2
-    proposed_coefficients = np.zeros(len(mu))
-    psnr_images = [None] * len(mu)
+    estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2 if mu is not None else -1
+    proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
+    psnr_images = [None] * len(mu) if mu is not None else []
 
     for i in range(n_it):
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
@@ -59,14 +82,15 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         #     psnr_images = None
         #     break
 
-        threshold = fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
-        indices = np.where(threshold < mu)[0]
-        if len(indices) > 0:
-            for index in indices:
-                proposed_coefficients[index] = i
-                psnr_images[index] = im_approx
-        else:
-            break
+        if mu is not None:
+            threshold = fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
+            indices = np.where(threshold < mu)[0]
+            if len(indices) > 0:
+                for index in indices:
+                    proposed_coefficients[index] = i
+                    psnr_images[index] = im_approx
+            else:
+                break
 
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
@@ -74,6 +98,6 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         pde_value = lap - fidelity_coef * (im_approx - im_noise)
         # Gradient descent iteration
         im_approx = im_approx + dt * pde_value
-    return im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
-        np.array(mass_loss_values), np.array(psnr_values), proposed_coefficients, psnr_images
 
+    # Format return values
+    return get_results_dict()
