@@ -1,6 +1,7 @@
-with open(f'all_analysis.csv', mode='a') as output:
+p = 1
+with open(f'all_analysis_p{p}.csv', mode='a') as output:
     for index in range(101):
-        with open(f'img_{index}/analysis.csv', mode='r') as input_dump:
+        with open(f'img_{index}/analysis_p{p}.csv', mode='r') as input_dump:
             i = 0
             for line in input_dump:
                 if i == 0:
