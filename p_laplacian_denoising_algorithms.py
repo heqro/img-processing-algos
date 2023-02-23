@@ -27,7 +27,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         """
 
         prior_value = (1 / p) * np.sum(np.sqrt(im_x ** 2 + im_y ** 2) ** p)
-        fidelity_value = fidelity_coef * np.sum((im_approx - im_noise) ** 2)
+        fidelity_value = fidelity_coef * np.sum((im_approx - im_noise) ** 2) / 2
         energy_value = prior_value + fidelity_value
         return energy_value, prior_value, fidelity_value
 
@@ -61,6 +61,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2 if mu is not None else -1
     proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
     psnr_images = [None] * len(mu) if mu is not None else []
+    max_psnr = False
 
     for i in range(n_it):
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
@@ -77,20 +78,23 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
             psnr_values += [im_tools.psnr(im_orig, im_approx)]
 
         #### Early stoppage (stop whenever psnr starts declining)
-        # if i > 2 and psnr_values[-1] < psnr_values[-2]:
-        #     proposed_coefficients = [i - 1]
-        #     psnr_images = None
-        #     break
+        if i > 2 and psnr_values[-1] < psnr_values[-2]:
+            # proposed_coefficients = [i - 1]
+            # psnr_images = None
+            break
+            # max_psnr = True
 
         if mu is not None:
             threshold = fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
             indices = np.where(threshold < mu)[0]
+            print(f'it{i}')
             if len(indices) > 0:
                 for index in indices:
                     proposed_coefficients[index] = i
                     psnr_images[index] = im_approx
             else:
-                break
+                if max_psnr:
+                    break
 
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
