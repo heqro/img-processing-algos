@@ -2,6 +2,7 @@
 import math
 
 import pandas as pd
+from numpy import ndarray
 from pandas import DataFrame
 import numpy as np
 
@@ -55,17 +56,56 @@ def get_stoppage_coefficient(data: DataFrame, height: float, width: float, noise
 
 def get_spline(db_index, noise_std):
     from scipy import interpolate
-    dims = 64 + np.arange(10) * 64 # assume we have this configuration
+    dims = 64 + np.arange(10) * 64  # assume we have this configuration
     x = dims
     y = dims
 
     X, Y = np.meshgrid(x, y)
 
     df = load_data(
-        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP2.csv')
+        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP1.csv')
     Z = np.zeros(X.shape)
     for xx in range(len(dims)):
         for yy in range(len(dims)):
             Z[xx, yy] = get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], noise_std)
 
     return interpolate.SmoothBivariateSpline(X.flatten(), Y.flatten(), Z.flatten())
+
+
+def get_surface_coefficients(db_index: int, noise_std: float, p_index: int | float) -> list[float]:
+    def get_matrix_row(x: float, y: float) -> list[float]:
+        return [1, x, y, x * y, x ** 2, y ** 2, x ** 2 * y, x * y ** 2, x ** 2 * y ** 2, x ** 3, x ** 3 * y,
+                x ** 3 * y ** 2, x ** 3 * y ** 3, y ** 3, x * y ** 3, x ** 2 * y ** 3]
+
+    def get_surface_matrix(A: ndarray, b: ndarray):
+        return np.dot(np.linalg.pinv(A), b)
+
+    dims = 64 + np.arange(10) * 64  # assume we have this configuration
+    x = dims / 640
+    y = dims / 640
+
+    X, Y = np.meshgrid(x, y)
+
+    df = load_data(
+        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP{p_index}.csv')
+
+    res = []
+    b = []
+    max_dims = np.max(dims)
+    for xx in dims:
+        for yy in dims:
+            res.append(get_matrix_row(xx / max_dims, yy / max_dims))
+            b.append(get_stoppage_coefficient(df, xx, yy, noise_std))
+    res = np.vstack(res)
+    c = np.array(b).T
+
+    return get_surface_matrix(res, c)
+
+
+def get_surface_function(db_index: int, noise_std: float, p_index: int | float):
+    coefs = get_surface_coefficients(db_index, noise_std, p_index)
+    from sympy.abc import x, y
+    from sympy import lambdify
+    base = [1, x, y, x * y, x ** 2, y ** 2, x ** 2 * y, x * y ** 2, x ** 2 * y ** 2, x ** 3, x ** 3 * y,
+            x ** 3 * y ** 2, x ** 3 * y ** 3, y ** 3, x * y ** 3, x ** 2 * y ** 3]
+    return lambdify([x, y], (coefs * base).sum())

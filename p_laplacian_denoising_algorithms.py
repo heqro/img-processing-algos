@@ -81,11 +81,11 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         if i > 2 and psnr_values[-1] < psnr_values[-2]:
             # proposed_coefficients = [i - 1]
             # psnr_images = None
-            break
-            # max_psnr = True
+            # break
+            max_psnr = True
 
         if mu is not None:
-            threshold = fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
+            threshold = 2 * fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
             indices = np.where(threshold < mu)[0]
             print(f'it{i}')
             if len(indices) > 0:
