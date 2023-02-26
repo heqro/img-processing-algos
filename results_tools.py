@@ -233,8 +233,11 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
 
     ax = fig.add_subplot(1, 2, 2)
     plt.plot(x_axis, psnr_values)
+
+    i = 1
     for key in stop_dict.keys():
-        plt.plot(x_axis[stop_dict.get(key)], psnr_values[stop_dict.get(key)], "s", label=key)
+        plt.plot(x_axis[stop_dict.get(key)], psnr_values[stop_dict.get(key)], marker=6 if i <= 10 else 7, label=key)
+        i += 1
     plt.plot(x_axis[np.argmax(psnr_values)], psnr_values[np.argmax(psnr_values)], marker="o", color="black", label="Max")
     plt.title("PSNR (dB)")
     plt.xlabel('time')
