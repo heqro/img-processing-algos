@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-p = 1
+p = 1.5
 df = pd.read_csv(f'all_analysis_p{p}.csv')
 
 max_diff_time = 5
@@ -10,11 +10,11 @@ from matplotlib.backends.backend_pdf import PdfPages
 dfs_dict = {}
 for noise in [0.05, 0.10, 0.15]:
     # delete timed-out simulation results in right noise profile
-    aux_df = df[(df['noise_std'] == noise) & (df['t_diff'] < max_diff_time)]
+    aux_df = df[(df['noise_std'] == noise)]
     # select relative error columns
     dfs_dict[str(noise)] = aux_df.filter(regex='^img_index|^rel_error_synth')
 
-noise_get = '0.1'
+noise_get = '0.05'
 for step in range(0, len(dfs_dict.get(noise_get)), 21):
     img_indices = dfs_dict.get(noise_get)[dfs_dict.get(noise_get).columns[0]][step:(step + 21)]
     fig = plt.figure(figsize=(15, 6))
