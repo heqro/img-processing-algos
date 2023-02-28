@@ -1,0 +1,1 @@
+np.cos(X) / np.log(Y+2) * np.exp(X/(Y+1))

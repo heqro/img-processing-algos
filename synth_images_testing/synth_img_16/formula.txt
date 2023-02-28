@@ -1,0 +1,1 @@
+np.tanh(Y**2 + X**2) * np.exp(1 - X*Y) * (Y > .5) + (np.cosh(Y**2) + np.sinh(X**2)) * (Y <= .5)

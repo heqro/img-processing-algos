@@ -1,0 +1,1 @@
+(1/(np.abs(X-.5)+1) + np.sqrt(Y/9) > .95) * np.tan(Y) * np.cos(X*Y) + np.tan(X) * ((X-.25)**2 + (Y-.75)**2 < .05)

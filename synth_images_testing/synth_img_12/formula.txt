@@ -1,0 +1,1 @@
+(np.sin(X*Y) < .5) * 2 * np.tan(X*Y) + np.cos((X+2)**3) + (np.sin(X*Y) > .5) * np.cosh(2.5*Y*X)
