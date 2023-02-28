@@ -1,7 +1,6 @@
 import coefficients_data_handler
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import interpolate
 
 import preprocessing
 
@@ -43,7 +42,7 @@ for index in range(len(noise_levels)): # load bicubic splines
 fig = plt.figure(figsize=(30, 7))
 colors = ['green', 'goldenrod', 'red']
 
-ax = fig.add_subplot(1, 4, 1)
+ax = fig.add_subplot(1, 1 + len(noise_levels), 1)
 img = preprocessing.load_normalized_image(f'synth_images_testing/synth_img_{db_index}/synth_img_256_256.png')
 ax.imshow(img)
 ax.axis('off')
@@ -52,11 +51,14 @@ plt.title(f'Synthetic image {db_index}')
 
 
 for index in range(len(noise_levels)):
-    ax = fig.add_subplot(1, 4, index + 2, projection='3d')
+    ax = fig.add_subplot(1, 1 + len(noise_levels), index + 2, projection='3d')
     ax.scatter(X, Y, Z[index], c=colors[index], marker='o', label=f'std={noise_levels[index]}')
     ax.plot_surface(grid_X, grid_Y, spline_funs[index](grid_X / 640, grid_Y / 640), cmap='plasma', alpha=.5)
     ax.set_xticks(dims)
+    ax.set_xlabel('width')
     ax.set_yticks(dims)
+    ax.set_ylabel('height')
+    ax.set_zlabel('coefficients')
     ax.invert_xaxis()
     ax.legend(loc="upper left")
 
