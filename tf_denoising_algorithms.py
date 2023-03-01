@@ -1,4 +1,5 @@
 import im_tools
+import results_tools
 from im_tools import GradientType
 import numpy as np
 import tensorflow as tf
@@ -12,9 +13,7 @@ class CostFunctionType(Enum):
 
 
 def tf_calculate_grad_mod_p(tf_im_approx: tf.Variable, p=2.0, epsilon=0.0):
-    tf_im_x = im_tools.tf_grad_x(tf_im_approx, GradientType.FORWARD)
-    tf_im_y = im_tools.tf_grad_y(tf_im_approx, GradientType.FORWARD)
-
+    tf_im_x, tf_im_y = tf.image.image_gradients(tf_im_approx)
     mod = tf.sqrt(tf.square(tf_im_x) + tf.square(tf_im_y) + epsilon)
     return tf.pow(mod, p)
 
@@ -24,7 +23,7 @@ def tf_constant_lambda_cost(tf_im_approx: tf.Variable, tf_im_noise: tf.constant,
     grad_mod_p = tf_calculate_grad_mod_p(tf_im_approx, p, epsilon)
 
     prior_value = tf.reduce_sum(tf_lambda * grad_mod_p)
-    fidelity_value = tf.reduce_sum(tf.square(tf_im_noise - tf_im_approx))
+    fidelity_value = tf.reduce_sum(tf.square(tf_im_noise - tf_im_approx)) / 2
     energy_value = prior_value + fidelity_value
 
     return energy_value, fidelity_value, prior_value
@@ -35,7 +34,7 @@ def tf_fidelity_mask_cost(tf_im_approx: tf.Variable, tf_lambda: tf.Variable, tf_
     grad_mod_p = tf_calculate_grad_mod_p(tf_im_approx, p, epsilon)
 
     prior_value = (1 / p) * tf.reduce_sum(grad_mod_p)
-    fidelity_value = tf.reduce_sum(tf_lambda * tf.square(tf_im_noise - tf_im_approx))
+    fidelity_value = tf.reduce_sum(tf_lambda * tf.square(tf_im_noise - tf_im_approx)) / 2
     energy_value = prior_value + fidelity_value
 
     return energy_value, fidelity_value, prior_value
@@ -58,7 +57,7 @@ def tf_mass_conservation(tf_im_approx: tf.Variable, tf_im_noise: tf.constant):
 
 def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float, dt: float, n_it: int,
                        p=2.0, epsilon=0.0, cost_function_type: CostFunctionType = CostFunctionType.NO_MASK,
-                       tf_im_orig=None, proposed_coefficient=-1.0):
+                       tf_im_orig=None, interactive=True, proposed_coefficient=-1.0):
     def get_cost_function():
         if cost_function_type.value == CostFunctionType.NO_MASK.value:
             return tf_constant_lambda_cost
@@ -77,8 +76,14 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             return [(derivatives[0], tf_im_approx), (derivatives[1], tf_lambda)]
         return [(derivatives[0], tf_im_approx)]
 
+    def get_results_dict() -> dict:
+        return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
+                'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
+                'psnr': np.array(psnr_values), 'img_denoised': tf_im_approx[0], 'mask': tf_lambda,
+                'coefficients': proposed_coefficients}
+
     # Initialization
-    omega_size = tf_im_noise.shape[1] * tf_im_noise.shape[2]
+    omega_size = tf_im_noise.shape[1] * tf_im_noise.shape[2] * tf_im_noise.shape[3]
     # Return values
     energy_values = []
     prior_values = []
@@ -96,18 +101,13 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     tape_args = get_tape_args()
     opt.build(tape_args)
 
-    estimated_variance = im_tools.fast_noise_std_estimation(img=tf_im_approx[0]) ** 2
-    proposed_stop = -1
-    psnr_image = None
-
     for i in tf.range(n_it):
-        # print("Iteration", i.numpy())
         with tf.GradientTape() as tape:
             energy, fidelity, prior = tf_cost(tf_im_approx=tf_im_approx, tf_im_noise=tf_im_noise,
                                               tf_lambda=tf_lambda, p=p, epsilon=epsilon)
-            energy_values += [energy.numpy() / omega_size]
-            prior_values += [prior.numpy() / omega_size]
-            fidelity_values += [fidelity.numpy() / omega_size]
+            energy_values += [energy.numpy()]
+            prior_values += [prior.numpy()]
+            fidelity_values += [fidelity.numpy()]
             mass_loss_values += [tf_mass_conservation(tf_im_noise=tf_im_noise, tf_im_approx=tf_im_approx) / omega_size]
 
             derivatives_cost = tape.gradient(energy, tape_args)
@@ -117,15 +117,13 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
         if tf_im_orig is not None:
             psnr_values += [tf.image.psnr(tf_im_orig, tf_im_approx, max_val=1.0)]
 
-        #### Early stoppage (stop whenever psnr starts declining)
-        if i.numpy() > 2 and psnr_values[-1] < psnr_values[-2]:
-            proposed_stop = i.numpy() - 1
-            psnr_image = None
-            return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
-                np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
-        #
-        # if proposed_coefficient * fidelity_values[-1] < estimated_variance: # if proposed coefficient == -1 then we run to the end
-        #     proposed_stop = i.numpy()
-        #     psnr_image = tf.constant(tf_im_approx)
-    return tf_im_approx, np.array(energy_values), np.array(prior_values), np.array(fidelity_values), \
-        np.array(mass_loss_values), np.array(psnr_values), proposed_stop, psnr_image, tf_lambda
+        if i > 2 and psnr_values[-1] < psnr_values[-2]:
+            proposed_coefficients = [i - 1]
+            break
+
+        if interactive and i % 10 == 0:
+            results_tools.plot_simple_image(tf_im_approx[0])
+            if input(f'It {i} - Press 0 to stop') == '0':
+                break
+
+    return get_results_dict()

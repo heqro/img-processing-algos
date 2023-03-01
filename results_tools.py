@@ -172,6 +172,7 @@ def print_psnr_data(psnr_values, proposed_stoppage_dict: dict):
     msg += "\n"
     return msg
 
+
 def plot_image_subtraction(img1, img2, title="Image subtraction results", show_plot=True, save_pdf=False, pdf_name=""):
     subtraction = 1 - np.abs(img1 - img2)
     fig = plt.figure()
@@ -195,6 +196,7 @@ def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name=""):
     plt.imshow(img)
     plt.axis('off')
     plt.axis('scaled')
+    plt.tight_layout()
 
     if show_plot:
         plt.show()
@@ -217,7 +219,7 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
 
     x_axis = np.arange(len(energy)) * time_step
 
-    fig = plt.figure(figsize=(10,10))
+    fig = plt.figure(figsize=(10, 10))
 
     ax = fig.add_subplot(1, 2, 1)
 
@@ -238,7 +240,8 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
     for key in stop_dict.keys():
         plt.plot(x_axis[stop_dict.get(key)], psnr_values[stop_dict.get(key)], marker=6 if i <= 10 else 7, label=key)
         i += 1
-    plt.plot(x_axis[np.argmax(psnr_values)], psnr_values[np.argmax(psnr_values)], marker="o", color="black", label="Max")
+    plt.plot(x_axis[np.argmax(psnr_values)], psnr_values[np.argmax(psnr_values)], marker="o", color="black",
+             label="Max")
     plt.title("PSNR (dB)")
     plt.xlabel('time')
     sec_x = ax.secondary_xaxis('top', functions=(step2it, it2step))
@@ -256,3 +259,30 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
         pp.savefig(fig)
         pp.close()
     plt.close()
+
+
+def tf_plot_curves(results: dict, time_step: float, title: str, show_plot=True, save_pdf=False, pdf_name=""):
+    def step2it(step):
+        return step / time_step
+
+    def it2step(it):
+        return it * time_step
+
+    x_axis = np.arange(len(results['energy'])) * time_step
+
+    fig = plt.figure(figsize=(10, 10))
+
+    ax = fig.add_subplot(1, 1, 1)
+
+    plt.plot(x_axis, results['energy'], label="Energy")
+    plt.plot(x_axis, results['prior'], label="Prior")
+    plt.plot(x_axis, results['fidelity'], label="Fidelity")
+    plt.plot(x_axis, results['mass'], label="Mass")
+    plt.legend(loc="upper right")
+    plt.xlabel('time')
+
+    sec_x = ax.secondary_xaxis('top', functions=(step2it, it2step))
+    sec_x.set_xlabel('iterations')
+
+    if show_plot:
+        plt.show()
