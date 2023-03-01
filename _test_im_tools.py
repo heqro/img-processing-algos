@@ -64,6 +64,14 @@ class MyTestCase(unittest.TestCase):
         im_y_conv = np.reshape(im_y_conv, newshape=tf_img.shape)
         assert np.equal(im_y_conv.all(), im_tools.tf_grad_y(tf_img, gradient_type=GradientType.BACKWARD).numpy().all())
 
+    def test_tensorflow_gradients(self):
+        from tensorflow import image, equal
+        tf_img = preprocessing.tf_load_normalized_image('test_images/dali.jpg')
+        grad_x_convolution = im_tools.tf_grad_x(tf_img, gradient_type=GradientType.FORWARD)
+        grad_y_convolution = im_tools.tf_grad_y(tf_img, gradient_type=GradientType.FORWARD)
+        grad_x, grad_y = image.image_gradients(tf_img)
+        assert equal(grad_x.numpy().all(), grad_x_convolution.numpy().all())
+        assert equal(grad_y.numpy().all(), grad_y_convolution.numpy().all())
     def test_fast_kernel_noise_variation(self):
         import time
 
