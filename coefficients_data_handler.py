@@ -18,8 +18,8 @@ def distance(df: DataFrame, height: float, width: float):
     """
 
     :param df: a DataFrame
-    :param width:
-    :param height:
+    :param width: of the image
+    :param height: of the image
     :return: the distances between the point (width, height) and the points (df["width"], df["height"])
     """
     return np.sqrt((df["height"] - height) ** 2 + (df["width"] - width) ** 2)
@@ -54,25 +54,16 @@ def get_stoppage_coefficient(data: DataFrame, height: float, width: float, noise
     return closest_std_coefficient(closest_point, noise_std)
 
 
-def get_spline(db_index, noise_std):
-    from scipy import interpolate
-    dims = 64 + np.arange(10) * 64  # assume we have this configuration
-    x = dims
-    y = dims
+def get_surface_coefficients(db_index: int, noise_std: float, p_index: int | float, case='') -> list[float]:
+    """
 
-    X, Y = np.meshgrid(x, y)
-
-    df = load_data(
-        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP1.csv')
-    Z = np.zeros(X.shape)
-    for xx in range(len(dims)):
-        for yy in range(len(dims)):
-            Z[xx, yy] = get_stoppage_coefficient(df, X[xx, yy], Y[xx, yy], noise_std)
-
-    return interpolate.SmoothBivariateSpline(X.flatten(), Y.flatten(), Z.flatten())
-
-
-def get_surface_coefficients(db_index: int, noise_std: float, p_index: int | float) -> list[float]:
+    :param db_index: synthetic image index.
+    :param noise_std: standard deviation in Gaussian additive noise model.
+    :param p_index: the value of p in our model.
+    :param case: case for which to search coefficients (fidelity mask, diffusion mask or without mask)
+    :return: a list containing the surface coefficients for the bicubic surface for the given standard deviation,
+    value of p and synthetic image index.
+    """
     def get_matrix_row(x: float, y: float) -> list[float]:
         return [1, x, y, x * y, x ** 2, y ** 2, x ** 2 * y, x * y ** 2, x ** 2 * y ** 2, x ** 3, x ** 3 * y,
                 x ** 3 * y ** 2, x ** 3 * y ** 3, y ** 3, x * y ** 3, x ** 2 * y ** 3]
@@ -81,13 +72,9 @@ def get_surface_coefficients(db_index: int, noise_std: float, p_index: int | flo
         return np.dot(np.linalg.pinv(A), b)
 
     dims = 64 + np.arange(10) * 64  # assume we have this configuration
-    x = dims / 640
-    y = dims / 640
-
-    X, Y = np.meshgrid(x, y)
 
     df = load_data(
-        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP{p_index}.csv')
+        path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP{p_index}{case}.csv')
 
     res = []
     b = []
@@ -102,8 +89,16 @@ def get_surface_coefficients(db_index: int, noise_std: float, p_index: int | flo
     return get_surface_matrix(res, c)
 
 
-def get_surface_function(db_index: int, noise_std: float, p_index: int | float):
-    coefs = get_surface_coefficients(db_index, noise_std, p_index)
+def get_surface_function(db_index: int, noise_std: float, p_index: int | float, case=''):
+    """
+
+    :param db_index: synthetic image index.
+    :param noise_std: standard deviation in Gaussian additive noise model.
+    :param p_index: the value of p in our model.
+    :param case: case for which to search coefficients (fidelity mask, diffusion mask or without mask)
+    :return: a function returning the surface associated to the parameters.
+    """
+    coefs = get_surface_coefficients(db_index, noise_std, p_index, case)
     from sympy.abc import x, y
     from sympy import lambdify
     base = [1, x, y, x * y, x ** 2, y ** 2, x ** 2 * y, x * y ** 2, x ** 2 * y ** 2, x ** 3, x ** 3 * y,

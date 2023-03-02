@@ -8,9 +8,10 @@ import preprocessing
 #   Load database   #
 #####################
 db_index = 1 # 2 3 4 8
-p = 1.5
+p = 1
+case='-fid'
 df = coefficients_data_handler.load_data(
-    path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP{p}.csv')
+    path=f'synth_images_testing/synth_img_{db_index}/results_log/coefficientsP{p}{case}.csv')
 
 dims = 64 + np.arange(10) * 64
 x = dims
@@ -36,7 +37,7 @@ x_points = np.arange(64, 640, 0.5)
 y_points = np.arange(64, 640, 0.5)
 grid_X, grid_Y = np.meshgrid(x_points, y_points)
 for index in range(len(noise_levels)): # load bicubic splines
-    spline_fun = coefficients_data_handler.get_surface_function(db_index, noise_levels[index], p)
+    spline_fun = coefficients_data_handler.get_surface_function(db_index, noise_levels[index], p, case)
     spline_funs.append(spline_fun)
 
 fig = plt.figure(figsize=(30, 7))
@@ -62,12 +63,12 @@ for index in range(len(noise_levels)):
     ax.invert_xaxis()
     ax.legend(loc="upper left")
 
-fig.suptitle(f'PSNR coefficients surface\n Synthetic image {db_index}, p={p}')
+fig.suptitle(f'PSNR coefficients surface\n Synthetic image {db_index}, p={p}. Fidelity mask.')
 
 # Save to pdf
 from matplotlib.backends.backend_pdf import PdfPages
 plt.tight_layout()
-pp = PdfPages(f'database_plots/synthetic_database_{db_index}_{p}.pdf')
+pp = PdfPages(f'database_plots/synthetic_database_{db_index}_{p}_{case[1:]}.pdf')
 pp.savefig(fig)
 pp.close()
 

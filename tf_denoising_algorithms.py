@@ -1,3 +1,5 @@
+from numpy import ndarray
+
 import im_tools
 import results_tools
 from im_tools import GradientType
@@ -57,7 +59,7 @@ def tf_mass_conservation(tf_im_approx: tf.Variable, tf_im_noise: tf.constant):
 
 def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float, dt: float, n_it: int,
                        p=2.0, epsilon=0.0, cost_function_type: CostFunctionType = CostFunctionType.NO_MASK,
-                       tf_im_orig=None, interactive=True, proposed_coefficient=-1.0):
+                       tf_im_orig=None, interactive=True, mu: ndarray | None = None):
     def get_cost_function():
         if cost_function_type.value == CostFunctionType.NO_MASK.value:
             return tf_constant_lambda_cost
@@ -101,6 +103,10 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     tape_args = get_tape_args()
     opt.build(tape_args)
 
+    estimated_variance = im_tools.fast_noise_std_estimation(tf_im_noise[0]) ** 2 if mu is not None else -1
+    proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
+    max_psnr = False
+
     for i in tf.range(n_it):
         with tf.GradientTape() as tape:
             energy, fidelity, prior = tf_cost(tf_im_approx=tf_im_approx, tf_im_noise=tf_im_noise,
@@ -108,7 +114,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             energy_values += [energy.numpy()]
             prior_values += [prior.numpy()]
             fidelity_values += [fidelity.numpy()]
-            mass_loss_values += [tf_mass_conservation(tf_im_noise=tf_im_noise, tf_im_approx=tf_im_approx) / omega_size]
+            mass_loss_values += [tf_mass_conservation(tf_im_noise=tf_im_noise, tf_im_approx=tf_im_approx)]
 
             derivatives_cost = tape.gradient(energy, tape_args)
 
@@ -118,12 +124,21 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             psnr_values += [tf.image.psnr(tf_im_orig, tf_im_approx, max_val=1.0)]
 
         if i > 2 and psnr_values[-1] < psnr_values[-2]:
-            proposed_coefficients = [i - 1]
-            break
+            max_psnr = True
 
         if interactive and i % 10 == 0:
             results_tools.plot_simple_image(tf_im_approx[0])
             if input(f'It {i} - Press 0 to stop') == '0':
                 break
+
+        if mu is not None:
+            threshold = 2 * fidelity_values[-1] / (estimated_variance * omega_size) # assume tf_lambda starts equal to 1
+            indices = np.where(threshold < mu)[0]
+            if len(indices) > 0:
+                for index in indices:
+                    proposed_coefficients[index] = i
+            else:
+                if max_psnr:
+                    break
 
     return get_results_dict()
