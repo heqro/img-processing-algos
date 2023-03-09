@@ -81,8 +81,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     def get_results_dict() -> dict:
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
-                'psnr': np.array(psnr_values), 'img_denoised': tf_im_approx[0], 'mask': tf_lambda,
-                'coefficients': proposed_coefficients}
+                'psnr': np.array(psnr_values), 'img_denoised': tf_im_approx[0], 'mask': masks,
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
 
     # Initialization
     omega_size = tf_im_noise.shape[1] * tf_im_noise.shape[2] * tf_im_noise.shape[3]
@@ -105,7 +105,9 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
 
     estimated_variance = im_tools.fast_noise_std_estimation(tf_im_noise[0]) ** 2 if mu is not None else -1
     proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
+    psnr_images = [None] * len(mu) if mu is not None else []
     max_psnr = False
+    masks = [None] * len(mu) if mu is not None else [tf_lambda]
 
     for i in tf.range(n_it):
         with tf.GradientTape() as tape:
@@ -137,6 +139,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             if len(indices) > 0:
                 for index in indices:
                     proposed_coefficients[index] = i
+                    psnr_images[index] = tf.constant(tf_im_approx)
+                    masks[index] = tf.constant(tf_lambda)
             else:
                 if max_psnr:
                     break
