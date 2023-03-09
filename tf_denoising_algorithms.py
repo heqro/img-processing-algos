@@ -11,7 +11,8 @@ from enum import Enum
 class CostFunctionType(Enum):
     NO_MASK = 0,
     FIDELITY_MASK = 1,
-    DIFFUSION_MASK = 2
+    DIFFUSION_MASK = 2,
+    DIFFUSION_SQUARE_MASK = 3
 
 
 def tf_calculate_grad_mod_p(tf_im_approx: tf.Variable, p=2.0, epsilon=0.0):
@@ -53,6 +54,16 @@ def tf_diffusion_mask_cost(tf_im_approx: tf.Variable, tf_lambda: tf.Variable, tf
     return energy_value, fidelity_value, prior_value
 
 
+def tf_diffusion_square_mask_cost(tf_im_approx: tf.Variable, tf_lambda: tf.Variable, tf_im_noise: tf.constant,
+                                  p=2.0, epsilon=0.0):
+    grad_mod_p = tf_calculate_grad_mod_p(tf_im_approx, p, epsilon)
+    prior_value = (1 / p) * tf.reduce_sum(tf.square(tf_lambda) * grad_mod_p)
+    fidelity_value = tf.reduce_sum(tf.square(tf_im_noise - tf_im_approx))
+    energy_value = prior_value + fidelity_value
+
+    return energy_value, fidelity_value, prior_value
+
+
 def tf_mass_conservation(tf_im_approx: tf.Variable, tf_im_noise: tf.constant):
     return tf.reduce_sum(tf_im_noise) - tf.reduce_sum(tf_im_approx)
 
@@ -67,6 +78,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             return tf_fidelity_mask_cost
         if cost_function_type.value == CostFunctionType.DIFFUSION_MASK.value:
             return tf_diffusion_mask_cost
+        if cost_function_type.value == CostFunctionType.DIFFUSION_SQUARE_MASK.value:
+            return tf_diffusion_square_mask_cost
 
     def get_tape_args():
         if cost_function_type.value != CostFunctionType.NO_MASK.value:
