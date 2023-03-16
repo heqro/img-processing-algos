@@ -195,3 +195,7 @@ def tf_grad_y(image, gradient_type: GradientType):
     tf_img_blue_x = tf.nn.conv2d(tf.expand_dims(image[:, :, :, 2], -1), tf_x_filter,
                                  strides=[1, 1, 1, 1], padding="SAME")
     return tf.concat([tf_img_red_x, tf_img_green_x, tf_img_blue_x], -1)
+
+
+def relationship_coefficient(img1, img2):
+    return np.sum(img1 * img2)
