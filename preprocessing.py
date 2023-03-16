@@ -21,7 +21,10 @@ def add_gaussian_noise(img, avg: float, std: float):
     :param std: Standard deviation for the gaussian noise.
     :return:
     """
-    return img + np.random.normal(avg, std, img.shape)
+    img = img + np.random.normal(avg, std, img.shape)
+    img_threshold = np.where(img < 0, 0, img)
+    img_threshold = np.where(img_threshold > 1, 1, img_threshold)
+    return img_threshold
 
 
 def tf_load_normalized_image(path: str):
@@ -35,9 +38,18 @@ def tf_load_normalized_image(path: str):
 
 
 def tf_add_gaussian_noise(img, avg: float, std: float):
-    return img + 1 * np.random.normal(avg, std, img.shape)
+    import tensorflow as tf
+    img = img + 1 * np.random.normal(avg, std, img.shape)
+    tf_threshold = tf.where(img < 0, 0, img)
+    tf_threshold = tf.where(tf_threshold > 1, 1, tf_threshold)
+    img = tf_threshold
+    return img
 
 
 def tf_add_mask(tf_img, initial_value: float):
     import tensorflow as tf
     return tf.Variable(initial_value * tf.ones(shape=tf_img.shape), name="lambda_x", trainable=True)
+
+
+def resize(img, width: int, height: int):
+    return cv2.resize(img, (width, height))
