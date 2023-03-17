@@ -53,3 +53,23 @@ def tf_add_mask(tf_img, initial_value: float):
 
 def resize(img, width: int, height: int):
     return cv2.resize(img, (width, height))
+
+
+def img_to_YCbCr(img):
+    img = cv2.convertScaleAbs(img)
+    return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+
+
+def gray_to_img(img):
+    return cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
+
+def load_gray_image(path: str):
+    """
+
+    :param path: The path to the image we want to load.
+    :return: Image normalized to [0,1].
+    """
+    image = cv2.imread(path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return cv2.normalize(image.astype('float'), None, 0.0, 1.0, cv2.NORM_MINMAX)

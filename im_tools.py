@@ -3,6 +3,8 @@ import scipy as sp
 
 from enum import Enum
 
+from numpy import ndarray
+
 
 class GradientType(Enum):
     FORWARD = 0,
@@ -199,3 +201,35 @@ def tf_grad_y(image, gradient_type: GradientType):
 
 def relationship_coefficient(img1, img2):
     return np.sum(img1 * img2)
+
+
+def ssim(ref_img, cmp_img, pch_size: tuple[int, int]) -> ndarray:
+    def ssim_patch(ref_pch, cmp_pch, c1: float = 1e-10, c2: float = 1e-10) -> float:
+        import numpy as np
+        mu_ref, mu_cmp = np.sum(ref_pch) / ref_pch.size, np.sum(cmp_pch) / cmp_pch.size
+        sigma_ref, sigma_cmp = np.sum((ref_pch - mu_ref) ** 2) / (ref_pch.size - 1), \
+                               np.sum((cmp_pch - mu_cmp) ** 2) / (cmp_pch.size - 1)
+        sigma_ref_cmp = np.sum((ref_pch - mu_ref) * (cmp_pch - mu_cmp)) / (cmp_pch.size - 1)
+        return (2 * mu_ref * mu_cmp + c1) * (2 * sigma_ref_cmp + c2) / \
+            ((mu_ref ** 2 + mu_cmp ** 2 + c1) * (sigma_ref ** 2 + sigma_cmp ** 2 + c2))
+
+    if ref_img.shape != cmp_img.shape:
+        raise ValueError("Images have different shape.")
+
+    from preprocessing import img_to_YCbCr
+    ref, cmp = img_to_YCbCr(ref_img), img_to_YCbCr(cmp_img)
+    pch_w, pch_h = pch_size[0], pch_size[1]
+    H, W, C = ref.shape
+    ssim = np.zeros((H, W))
+    for h_index in range(H - pch_h + 1):
+        for w_index in range(W - pch_w + 1):
+            ref_slice = ref[h_index:(h_index + pch_h), w_index:(w_index + pch_w), :]
+            cmp_slice = cmp[h_index:(h_index + pch_h), w_index:(w_index + pch_w), :]
+            ssim_Y = ssim_patch(ref_slice[:, :, 0],
+                                cmp_slice[:, :, 0])
+            ssim_Cb = ssim_patch(ref_slice[:, :, 1],
+                                 cmp_slice[:, :, 1])
+            ssim_Cr = ssim_patch(ref_slice[:, :, 2],
+                                 cmp_slice[:, :, 2])
+            ssim[h_index, w_index] = .7 * ssim_Y + .15 * ssim_Cb + .15 * ssim_Cr
+    return ssim
