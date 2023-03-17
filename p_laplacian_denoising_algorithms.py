@@ -4,11 +4,14 @@ import im_tools
 from im_tools import GradientType
 import numpy as np
 
+from results_tools import plot_simple_image
+
 
 def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int,
-                          mu: ndarray | None = None, im_orig=None) -> dict:
+                          mu: ndarray | None = None, im_orig=None, interactive=False) -> dict:
     """
     Applies ``n_it`` iterations of the gradient method to the generalized Tikhonov regularization model.
+    :param interactive: whether to stop after a few iterations.
     :param im_noise: an image with Gaussian noise n ~ N(0, sigma)
     :param fidelity_coef: lambda fidelity coefficient that multiplies the fidelity term.
     :param epsilon: tolerance to add to the gradient; useful if `p` = 1.
@@ -47,7 +50,14 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
                 'psnr': np.array(psnr_values), 'img_denoised': im_approx,
-                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images,
+                'udt': u_dt, 'resto': resto}
+
+    def print_u_dt():
+        u_dt.append((np.sum(im_approx**2) - np.sum(im_prev**2)) / (2 * dt))
+    def print_resto():
+        sigma = im_tools.fast_noise_std_estimation(im_approx)
+        resto.append(sigma**2 * np.sum(fidelity_coef * im_approx))
 
     # Initialization
     omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
@@ -57,6 +67,9 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     mass_loss_values = []
     psnr_values = []
     im_approx = im_noise
+    im_prev = im_approx
+    u_dt = []
+    resto = []
 
     estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2 if mu is not None else -1
     proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
@@ -96,12 +109,20 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
                 if max_psnr:
                     break
 
+        if interactive and i % 10 == 0:
+            plot_simple_image(im_approx)
+            if input(f'It {i} - Press 0 to stop') == '0':
+                break
+
         # Calculate next iteration
         lap = im_tools.div(img_x=im_x, img_y=im_y, p=p, epsilon=epsilon)
         # PDE calculation
         pde_value = lap - fidelity_coef * (im_approx - im_noise)
         # Gradient descent iteration
+        im_prev = im_approx
         im_approx = im_approx + dt * pde_value
+        print_u_dt()
+        print_resto()
 
     # Format return values
     return get_results_dict()
