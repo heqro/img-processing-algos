@@ -1,6 +1,6 @@
-p = 1.5
+p = 1
 with open(f'all_analysis_p{p}.csv', mode='a') as output:
-    for index in range(15):
+    for index in range(101):
         with open(f'img_{index}/analysis_p{p}.csv', mode='r') as input_dump:
             i = 0
             for line in input_dump:
