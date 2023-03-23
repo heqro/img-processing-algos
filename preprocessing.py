@@ -70,3 +70,7 @@ def load_gray_image(path: str):
     image = cv2.imread(path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return cv2.normalize(image.astype('float'), None, 0.0, 1.0, cv2.NORM_MINMAX)
+
+def rgb_to_gray(img):
+    R, G, B = img[:, :, 0], img[:, :, 1], img[:, :, 2]
+    return (R+G+B)/3

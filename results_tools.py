@@ -261,6 +261,46 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
     plt.close()
 
 
+def plot_restriction(results: dict, dt: float, img_index: int, std: float, p: int, show_17: bool, show_plot=True,
+                     save_pdf=False, pdf_name=""):
+    def get_n_colors(n):
+        return ['#CCCCCC', '#99CCFF', '#0066CC', '#003399',
+                '#99CC99', '#339933', '#006600', '#FFFF99',
+                '#CCCC00', '#999900', '#FFCC99', '#FF9900',
+                '#CC6600', '#FF9999', '#FF6666', '#CC0000', '#FF00FF'][:n]
+
+    fig = plt.figure(figsize=(15, 10))
+    plt.plot(results['udt'], label=r"$\frac{1}{2} \frac{d \| u_k \|^2_2 (t)}{d t}$")
+    plt.plot(results['prior'][1:], label=r"$\int_{\Omega} | \nabla u_k|^p$")
+    plt.plot([-x for x in results['resto']], label=r"$-\sigma_{\varepsilon} \lambda \int_{\Omega} u_k$")
+
+    plt.plot([results['udt'][i] + results['prior'][i + 1] - results['resto'][i] for i in range(len(results['udt']))],
+             label="sum")
+    plt.xlabel(r'iterations with $\Delta t=$' + f'{dt}')
+    eqn = "\\frac{1}{2} \\frac{d \| u_k \|^2_2 (t)}{d t} + \int_{\Omega} | \\nabla u_k|^p - \sigma_{\\varepsilon} \lambda \int_{\Omega} u_k = 0"
+    plt.title(r"Equation $" + eqn + "$" + f' Case p={p}.\nAnalysis for img {img_index}. $\sigma={std}$.')
+
+    colors = get_n_colors(len(results['coefficients']) - 1 + show_17)
+    for index in range(len(results['coefficients']) - 1 + show_17):
+        pattern = '--' if index % 2 else ':'
+        lw = .65 if index % 2 else .85
+        plt.axvline(x=results['coefficients'][index], color=colors[index], label=f'synth_img_{index + 1}', lw=lw,
+                    ls=pattern)
+    plt.axvline(x=np.argmax(results['psnr']), color="black", lw=.65, label="Max")
+    plt.legend(loc=(1.04, 0))
+    plt.tight_layout()
+
+    if show_plot:
+        plt.show()
+
+    if save_pdf:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(f'{pdf_name}.pdf')
+        pp.savefig(fig)
+        pp.close()
+    plt.close()
+
+
 def tf_plot_curves(results: dict, time_step: float, title: str, show_plot=True, save_pdf=False, pdf_name=""):
     def step2it(step):
         return step / time_step

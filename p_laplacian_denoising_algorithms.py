@@ -96,6 +96,8 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
             # psnr_images = None
             # break
             max_psnr = True
+            if mu is None:
+                break
 
         if mu is not None:
             threshold = 2 * fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
