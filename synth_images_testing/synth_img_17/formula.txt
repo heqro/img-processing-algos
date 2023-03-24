@@ -1,0 +1,1 @@
+np.cos(np.tan(Y + X) * X) + np.cos(np.tan(Y+1 + X) * X) + np.cos(np.tan(Y+.5 + X) * X)
