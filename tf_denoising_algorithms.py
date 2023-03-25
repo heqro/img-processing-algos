@@ -95,7 +95,14 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
                 'psnr': np.array(psnr_values), 'img_denoised': tf_im_approx[0], 'mask': masks,
-                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images,
+                'udt': u_dt, 'resto': resto}
+    
+    def print_u_dt():
+        u_dt.append((tf.reduce_sum(tf_im_approx**2) - tf.reduce_sum(im_prev**2)) / (2 * dt))
+    def print_resto():
+        sigma = im_tools.fast_noise_std_estimation(tf_im_approx[0])
+        resto.append(sigma * np.sum(tf_lambda * tf_im_approx))
 
     # Initialization
     omega_size = tf_im_noise.shape[1] * tf_im_noise.shape[2] * tf_im_noise.shape[3]
@@ -105,6 +112,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     fidelity_values = []
     mass_loss_values = []
     psnr_values = []
+    # Restriction
+    u_dt, resto = [], []
     # Tflow initialization
     opt = tf.keras.optimizers.SGD(learning_rate=dt)
     tf_cost = get_cost_function()
@@ -112,7 +121,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     tf_im_approx = tf.Variable(tf.zeros(shape=tf_im_noise.shape),
                                name="tf_im_approx", trainable=True)
     tf_im_approx.assign(tf_im_noise)
-
+    im_prev = tf.constant(tf_im_approx)
     tape_args = get_tape_args()
     opt.build(tape_args)
 
@@ -140,6 +149,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
 
         if i > 2 and psnr_values[-1] < psnr_values[-2]:
             max_psnr = True
+            if mu is None:
+                break
 
         if interactive and i % 10 == 0:
             results_tools.plot_simple_image(tf_im_approx[0])
@@ -147,7 +158,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
                 break
 
         if mu is not None:
-            threshold = 2 * fidelity_values[-1] / (estimated_variance * omega_size) # assume tf_lambda starts equal to 1
+            threshold = 2 * fidelity_values[-1] / (tf_lambda * estimated_variance * omega_size) # assume tf_lambda starts equal to 1
             indices = np.where(threshold < mu)[0]
             if len(indices) > 0:
                 for index in indices:
@@ -157,5 +168,8 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             else:
                 if max_psnr:
                     break
+        print_u_dt()
+        print_resto()
+        im_prev = tf.constant(tf_im_approx)
 
     return get_results_dict()

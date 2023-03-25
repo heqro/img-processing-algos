@@ -57,7 +57,8 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         u_dt.append((np.sum(im_approx**2) - np.sum(im_prev**2)) / (2 * dt))
     def print_resto():
         sigma = im_tools.fast_noise_std_estimation(im_approx)
-        resto.append(sigma**2 * np.sum(fidelity_coef * im_approx))
+        resto.append(sigma * np.sum(fidelity_coef * im_approx))
+        # resto.append(fidelity_coef**2*sigma**2*omega_size + np.sum(im_approx**2))  # other restriction
 
     # Initialization
     omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
