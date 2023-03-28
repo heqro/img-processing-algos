@@ -1,0 +1,1 @@
+(np.cos(X**2) + np.tan(40*Y) > 1) * np.cos(X + np.tan(Y + X)) + (np.cos(X**2) + np.tan(4*Y) <= 1) * np.cos(1000*X * np.sin(Y/10)) - np.cos(10*X)
