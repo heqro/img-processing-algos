@@ -21,11 +21,8 @@ def add_gaussian_noise(img, avg: float, std: float):
     :param std: Standard deviation for the gaussian noise.
     :return:
     """
-    img = img + np.random.normal(avg, std, img.shape)
-    img_threshold = np.where(img < 0, 0, img)
-    img_threshold = np.where(img_threshold > 1, 1, img_threshold)
-    return img_threshold
-
+    return img + np.random.normal(avg, std, img.shape)
+    
 
 def tf_load_normalized_image(path: str):
     import tensorflow as tf
@@ -55,13 +52,13 @@ def resize(img, width: int, height: int):
     return cv2.resize(img, (width, height))
 
 
-def img_to_YCbCr(img):
-    img = cv2.convertScaleAbs(img)
-    return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-
-
-def gray_to_img(img):
-    return cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+def rgb_to_YCbCr(img):
+    R, G, B = img[:, :, 0], img[:, :, 1], img[:, :, 2]
+    new_img = np.zeros(shape=img.shape)
+    new_img[:, :, 0] = 0.0 + .299 * R + .587 * G + .114 * B
+    new_img[:, :, 1] = .5 + -.1687 * R - .3313 * G + .5 * B
+    new_img[:, :, 2] = .5 + .5 * R - .4187 * G - .4392 * B
+    return new_img
 
 
 def load_gray_image(path: str):

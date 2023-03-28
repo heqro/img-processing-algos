@@ -216,8 +216,8 @@ def ssim(ref_img, cmp_img, pch_size: tuple[int, int]) -> ndarray:
     if ref_img.shape != cmp_img.shape:
         raise ValueError("Images have different shape.")
 
-    from preprocessing import img_to_YCbCr
-    ref, cmp = img_to_YCbCr(ref_img), img_to_YCbCr(cmp_img)
+    from preprocessing import rgb_to_YCbCr
+    ref, cmp = rgb_to_YCbCr(ref_img), rgb_to_YCbCr(cmp_img)
     pch_w, pch_h = pch_size[0], pch_size[1]
     H, W, C = ref.shape
     ssim = np.zeros((H, W))
