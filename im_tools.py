@@ -93,7 +93,7 @@ def div(img_x, img_y, gradient_type=GradientType.BACKWARD, p=2, epsilon=0):
     return gradx(np.multiply(img_x, mod_p), gradient_type) + grady(np.multiply(img_y, mod_p), gradient_type)
 
 
-def psnr(img_original, img_noise):
+def psnr(img_original, img_noise) -> float:
     """
 
     :param img_original: Noise-free image

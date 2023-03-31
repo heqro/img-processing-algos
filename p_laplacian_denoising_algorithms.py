@@ -50,15 +50,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
                 'psnr': np.array(psnr_values), 'img_denoised': im_approx,
-                'coefficients': proposed_coefficients, 'psnr_images': psnr_images,
-                'udt': u_dt, 'resto': resto}
-
-    def print_u_dt():
-        u_dt.append((np.sum(im_approx**2) - np.sum(im_prev**2)) / (2 * dt))
-    def print_resto():
-        sigma = im_tools.fast_noise_std_estimation(im_approx)
-        resto.append(sigma * np.sum(fidelity_coef * im_approx))
-        # resto.append(fidelity_coef**2*sigma**2*omega_size + np.sum(im_approx**2))  # other restriction
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
 
     # Initialization
     omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
@@ -68,9 +60,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     mass_loss_values = []
     psnr_values = []
     im_approx = im_noise
-    im_prev = im_approx
-    u_dt = []
-    resto = []
+    
 
     estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2 if mu is not None else -1
     proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
@@ -103,7 +93,6 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         if mu is not None:
             threshold = 2 * fidelity_values[-1] / (fidelity_coef * estimated_variance * omega_size)
             indices = np.where(threshold < mu)[0]
-            print(f'it{i}')
             if len(indices) > 0:
                 for index in indices:
                     proposed_coefficients[index] = i
@@ -122,10 +111,7 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         # PDE calculation
         pde_value = lap - fidelity_coef * (im_approx - im_noise)
         # Gradient descent iteration
-        im_prev = im_approx
         im_approx = im_approx + dt * pde_value
-        print_u_dt()
-        print_resto()
 
     # Format return values
     return get_results_dict()

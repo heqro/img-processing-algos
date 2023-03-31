@@ -173,7 +173,6 @@ def print_psnr_data(psnr_values, proposed_stoppage_dict: dict):
     msg += "\n"
     return msg
 
-
 def plot_image_subtraction(img1, img2, title="Image subtraction results", show_plot=True, save_pdf=False, pdf_name=""):
     subtraction = 1 - np.abs(img1 - img2)
     fig = plt.figure()
