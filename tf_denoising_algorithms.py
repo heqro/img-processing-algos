@@ -12,7 +12,8 @@ class CostFunctionType(Enum):
     NO_MASK = 0,
     FIDELITY_MASK = 1,
     DIFFUSION_MASK = 2,
-    DIFFUSION_SQUARE_MASK = 3
+    DIFFUSION_SQUARE_MASK = 3,
+    LOW_ENERGY = 4
 
 
 def tf_calculate_grad_mod_p(tf_im_approx: tf.Variable, p=2.0, epsilon=0.0):
@@ -63,9 +64,15 @@ def tf_diffusion_square_mask_cost(tf_im_approx: tf.Variable, tf_lambda: tf.Varia
 
     return energy_value, fidelity_value, prior_value
 
+def tf_low_energy_cost(tf_im_approx: tf.Variable, tf_lambda: tf.Variable,  tf_im_noise: tf.constant,
+                                  p=2.0, epsilon=0.0):
+    prior_value = tf.reduce_sum(tf_lambda * tf_im_approx ** 2)
+    fidelity_value = tf.reduce_sum(tf.square(tf_im_noise - tf_im_approx))
+    energy_value = prior_value + fidelity_value
+    return energy_value, fidelity_value, prior_value
 
 def tf_mass_conservation(tf_im_approx: tf.Variable, tf_im_noise: tf.constant):
-    return tf.reduce_sum(tf_im_noise) - tf.reduce_sum(tf_im_approx)
+    return tf.reduce_sum(tf_im_approx) - tf.reduce_sum(tf_im_noise)
 
 
 def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float, dt: float, n_it: int,
@@ -80,14 +87,16 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             return tf_diffusion_mask_cost
         if cost_function_type.value == CostFunctionType.DIFFUSION_SQUARE_MASK.value:
             return tf_diffusion_square_mask_cost
+        if cost_function_type.value == CostFunctionType.LOW_ENERGY.value:
+            return tf_low_energy_cost
 
     def get_tape_args():
-        if cost_function_type.value != CostFunctionType.NO_MASK.value:
+        if cost_function_type.value != CostFunctionType.NO_MASK.value and cost_function_type.value != CostFunctionType.LOW_ENERGY.value:
             return [tf_im_approx, tf_lambda]
         return [tf_im_approx]
 
     def get_pairs(derivatives):
-        if cost_function_type.value != CostFunctionType.NO_MASK.value:
+        if cost_function_type.value != CostFunctionType.NO_MASK.value and cost_function_type.value != CostFunctionType.LOW_ENERGY.value:
             return [(derivatives[0], tf_im_approx), (derivatives[1], tf_lambda)]
         return [(derivatives[0], tf_im_approx)]
 
@@ -95,14 +104,7 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
                 'psnr': np.array(psnr_values), 'img_denoised': tf_im_approx[0], 'mask': masks,
-                'coefficients': proposed_coefficients, 'psnr_images': psnr_images,
-                'udt': u_dt, 'resto': resto}
-    
-    def print_u_dt():
-        u_dt.append((tf.reduce_sum(tf_im_approx**2) - tf.reduce_sum(im_prev**2)) / (2 * dt))
-    def print_resto():
-        sigma = im_tools.fast_noise_std_estimation(tf_im_approx[0])
-        resto.append(sigma * np.sum(tf_lambda * tf_im_approx))
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
 
     # Initialization
     omega_size = tf_im_noise.shape[1] * tf_im_noise.shape[2] * tf_im_noise.shape[3]
@@ -121,7 +123,6 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
     tf_im_approx = tf.Variable(tf.zeros(shape=tf_im_noise.shape),
                                name="tf_im_approx", trainable=True)
     tf_im_approx.assign(tf_im_noise)
-    im_prev = tf.constant(tf_im_approx)
     tape_args = get_tape_args()
     opt.build(tape_args)
 
@@ -147,10 +148,10 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
         if tf_im_orig is not None:
             psnr_values += [tf.image.psnr(tf_im_orig, tf_im_approx, max_val=1.0)]
 
-        if i > 2 and psnr_values[-1] < psnr_values[-2]:
-            max_psnr = True
-            if mu is None:
-                break
+        # if i > 2 and psnr_values[-1] < psnr_values[-2]:
+        #     max_psnr = True
+        #     if mu is None:
+        #         break
 
         if interactive and i % 10 == 0:
             results_tools.plot_simple_image(tf_im_approx[0])
@@ -168,8 +169,5 @@ def tf_apply_denoising(tf_im_noise: tf.constant, tf_lambda: tf.Variable | float,
             else:
                 if max_psnr:
                     break
-        print_u_dt()
-        print_resto()
-        im_prev = tf.constant(tf_im_approx)
 
     return get_results_dict()
