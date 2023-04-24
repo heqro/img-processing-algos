@@ -5,10 +5,11 @@ from im_tools import GradientType
 import numpy as np
 
 from results_tools import plot_simple_image
+from skimage.metrics import structural_similarity as ssim
 
 
 def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: float, dt: float, n_it: int,
-                          mu: ndarray | None = None, im_orig=None, interactive=False) -> dict:
+                          mu: ndarray | None = None, im_orig=None, interactive=False, compute_ssim=False) -> dict:
     """
     Applies ``n_it`` iterations of the gradient method to the generalized Tikhonov regularization model.
     :param interactive: whether to stop after a few iterations.
@@ -50,7 +51,8 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
         return {'energy': np.array(energy_values), 'prior': np.array(prior_values),
                 'fidelity': np.array(fidelity_values), 'mass': np.array(mass_loss_values),
                 'psnr': np.array(psnr_values), 'img_denoised': im_approx,
-                'coefficients': proposed_coefficients, 'psnr_images': psnr_images}
+                'coefficients': proposed_coefficients, 'psnr_images': psnr_images,
+                'ssim_indices': ssim_indices}
 
     # Initialization
     omega_size = im_noise.shape[0] * im_noise.shape[1] * im_noise.shape[2]
@@ -60,12 +62,12 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
     mass_loss_values = []
     psnr_values = []
     im_approx = im_noise
-    
 
     estimated_variance = im_tools.fast_noise_std_estimation(img=im_noise) ** 2 if mu is not None else -1
     proposed_coefficients = -np.ones(len(mu)) if mu is not None else []
     psnr_images = [None] * len(mu) if mu is not None else []
     max_psnr = False
+    ssim_indices = []
 
     for i in range(n_it):
         im_x = im_tools.gradx(im_approx, GradientType.FORWARD)
@@ -80,6 +82,10 @@ def p_laplacian_denoising(im_noise, fidelity_coef: float, epsilon: float, p: flo
 
         if im_orig is not None:
             psnr_values += [im_tools.psnr(im_orig, im_approx)]
+            if compute_ssim:
+                # clip numbers above 1 and below 0
+                ssim_indices += [
+                    ssim(np.clip(a=im_approx, a_min=0.0, a_max=1.0), im_orig, channel_axis=2, data_range=1.0)]
 
         #### Early stoppage (stop whenever psnr starts declining)
         if i > 2 and psnr_values[-1] < psnr_values[-2]:
