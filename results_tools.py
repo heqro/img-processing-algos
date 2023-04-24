@@ -210,7 +210,7 @@ def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name="", cmap=Non
 
 
 def plot_model_curves(energy, prior, fidelity, mass, time_step,
-                      psnr_values, stop_dict: dict, title, show_plot=True, save_pdf=False, pdf_name=""):
+                      psnr_values, stop_dict: dict, title, show_plot=True, save_pdf=False, pdf_name="", plot_size=(10,10)):
     def step2it(step):
         return step / time_step
 
@@ -219,7 +219,7 @@ def plot_model_curves(energy, prior, fidelity, mass, time_step,
 
     x_axis = np.arange(len(energy)) * time_step
 
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=plot_size)
 
     ax = fig.add_subplot(1, 2, 1)
 
