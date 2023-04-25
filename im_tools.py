@@ -21,7 +21,7 @@ CENTER_Y_GRADIENT = [[0.0, 0.5, 0.0], [0.0, 0.0, 0.0], [0.0, -0.5, 0.0]]
 BWRD_Y_GRADIENT = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, -1.0, 0.0]]
 
 
-def gradx(img, gradient_type: GradientType, use_convolution=True):
+def gradx(img, gradient_type: GradientType):
     """
     Calculates the gradient of an image along the x-axis.
     :param img: The image for which we calculate the gradient.
@@ -33,33 +33,25 @@ def gradx(img, gradient_type: GradientType, use_convolution=True):
     using the finite approximation formula of type gradient_type.
     """
     img_x = np.zeros(img.shape)
-    if not use_convolution:
-        if gradient_type.value == GradientType.FORWARD.value:
-            if len(img.shape) == 3:
-                img_x[:, :-1, :] = img[:, 1:, :] - img[:, :-1, :]
-            if len(img.shape) == 2:
-                img_x[:, :-1] = img[:, 1:] - img[:, :-1]
-        if gradient_type.value == GradientType.CENTERED.value:
-            if len(img.shape) == 3:
-                img_x[:, 1:-1, :] = (img[:, 2:, :] - img[:, :-2, :]) / 2
-            if len(img.shape) == 2:
-                img_x[:, 1:-1] = (img[:, 2:] - img[:, :-2]) / 2
-        if gradient_type.value == GradientType.BACKWARD.value:
-            if len(img.shape) == 3:
-                img_x[:, 1:, :] = img[:, 1:, :] - img[:, :-1, :]
-            if len(img.shape) == 2:
-                img_x[:, 1:] = img[:, 1:] - img[:, :-1]
-    else:
-        if gradient_type.value == GradientType.FORWARD.value:
-            img_x = convolve_image(img, np.array(FWRD_X_GRADIENT))
-        if gradient_type.value == GradientType.CENTERED.value:
-            img_x = convolve_image(img, np.array(CENTER_X_GRADIENT))
-        if gradient_type.value == GradientType.BACKWARD.value:
-            img_x = convolve_image(img, np.array(BWRD_X_GRADIENT))
+    if gradient_type.value == GradientType.FORWARD.value:
+        if len(img.shape) == 3:
+            img_x[:, :-1, :] = img[:, 1:, :] - img[:, :-1, :]
+        if len(img.shape) == 2:
+            img_x[:, :-1] = img[:, 1:] - img[:, :-1]
+    if gradient_type.value == GradientType.CENTERED.value:
+        if len(img.shape) == 3:
+            img_x[:, 1:-1, :] = (img[:, 2:, :] - img[:, :-2, :]) / 2
+        if len(img.shape) == 2:
+            img_x[:, 1:-1] = (img[:, 2:] - img[:, :-2]) / 2
+    if gradient_type.value == GradientType.BACKWARD.value:
+        if len(img.shape) == 3:
+            img_x[:, 1:, :] = img[:, 1:, :] - img[:, :-1, :]
+        if len(img.shape) == 2:
+            img_x[:, 1:] = img[:, 1:] - img[:, :-1]
     return img_x
 
 
-def grady(img, gradient_type: GradientType, use_convolution=True):
+def grady(img, gradient_type: GradientType):
     """
     Calculates the gradient of an image along the y-axis.
     :param img: The image for which we calculate the gradient.
@@ -71,33 +63,25 @@ def grady(img, gradient_type: GradientType, use_convolution=True):
     using the finite approximation formula of type gradient_type.
     """
     img_y = np.zeros(img.shape)
-    if not use_convolution:
-        if gradient_type.value == GradientType.FORWARD.value:
-            if len(img.shape) == 3:
-                img_y[:-1, :, :] = img[1:, :, :] - img[:-1, :, :]
-            if len(img.shape) == 2:
-                img_y[:-1, :] = img[1:, :] - img[:-1, :]
-        if gradient_type.value == GradientType.CENTERED.value:
-            if len(img.shape) == 3:
-                img_y[1:-1, :, :] = (img[2:, :, :] - img[:-2, :, :]) / 2
-            if len(img.shape) == 2:
-                img_y[1:-1, :] = (img[2:, :] - img[:-2, :]) / 2
-        if gradient_type.value == GradientType.BACKWARD.value:
-            if len(img.shape) == 3:
-                img_y[1:, :, :] = img[1:, :, :] - img[-1:, :, :]
-            if len(img.shape) == 2:
-                img_y[1:, :] = img[1:, :] - img[-1:, :]
-    else:
-        if gradient_type.value == GradientType.FORWARD.value:
-            img_y = convolve_image(img, np.array(FWRD_Y_GRADIENT))
-        if gradient_type.value == GradientType.CENTERED.value:
-            img_y = convolve_image(img, np.array(CENTER_Y_GRADIENT))
-        if gradient_type.value == GradientType.BACKWARD.value:
-            img_y = convolve_image(img, np.array(BWRD_Y_GRADIENT))
+    if gradient_type.value == GradientType.FORWARD.value:
+        if len(img.shape) == 3:
+            img_y[:-1, :, :] = img[1:, :, :] - img[:-1, :, :]
+        if len(img.shape) == 2:
+            img_y[:-1, :] = img[1:, :] - img[:-1, :]
+    if gradient_type.value == GradientType.CENTERED.value:
+        if len(img.shape) == 3:
+            img_y[1:-1, :, :] = (img[2:, :, :] - img[:-2, :, :]) / 2
+        if len(img.shape) == 2:
+            img_y[1:-1, :] = (img[2:, :] - img[:-2, :]) / 2
+    if gradient_type.value == GradientType.BACKWARD.value:
+        if len(img.shape) == 3:
+            img_y[1:, :, :] = img[1:, :, :] - img[-1:, :, :]
+        if len(img.shape) == 2:
+            img_y[1:, :] = img[1:, :] - img[-1:, :]
     return img_y
 
 
-def div(img_x, img_y, gradient_type=GradientType.BACKWARD, p=2, epsilon=0, use_convolution=False):
+def div(img_x, img_y, gradient_type=GradientType.BACKWARD, p=2, epsilon=0):
     """
     Calculates the divergence of an image.
     :param img_x: image gradient alongside the x-axis.
@@ -108,7 +92,7 @@ def div(img_x, img_y, gradient_type=GradientType.BACKWARD, p=2, epsilon=0, use_c
     :return: The mapping of the image p-Laplacian along the y-axis.
     """
     mod_p = np.sqrt(img_x ** 2 + img_y ** 2 + epsilon) ** (p - 2)
-    return gradx(np.multiply(img_x, mod_p), gradient_type, use_convolution=use_convolution) + grady(np.multiply(img_y, mod_p), gradient_type, use_convolution=use_convolution)
+    return gradx(np.multiply(img_x, mod_p), gradient_type) + grady(np.multiply(img_y, mod_p), gradient_type)
 
 
 def psnr(img_original, img_noise) -> float:

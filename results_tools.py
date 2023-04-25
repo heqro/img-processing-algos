@@ -191,9 +191,10 @@ def plot_image_subtraction(img1, img2, title="Image subtraction results", show_p
         pp.close()
 
 
-def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name="", cmap=None):
+def plot_simple_image(img, show_plot=True, save_pdf=False, pdf_name="", cmap=None, title=""):
     fig = plt.figure()
     plt.imshow(img, cmap=cmap)
+    plt.title(title)
     plt.axis('off')
     plt.axis('scaled')
     plt.tight_layout()
