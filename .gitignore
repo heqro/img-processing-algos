@@ -20,3 +20,5 @@ test_images/forlan2.jpeg
 ptm.py
 test_images/*
 _demo*
+_test_mask*
+_test_no_mask*
