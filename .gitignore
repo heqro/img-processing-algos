@@ -23,3 +23,5 @@ _demo*
 _test_mask*
 _test_no_mask*
 plot_database.py
+
+.vscode/
